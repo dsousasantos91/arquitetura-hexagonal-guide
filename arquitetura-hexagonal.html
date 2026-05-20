@@ -1,0 +1,1424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arquitetura Hexagonal — Guia de Estudos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --hex: #0a0a0f;
+    --hex-mid: #12121a;
+    --hex-surface: #1a1a26;
+    --hex-border: #2a2a3f;
+    --accent: #7c3aed;
+    --accent-glow: #9d5ff0;
+    --accent-soft: rgba(124,58,237,0.15);
+    --port: #06b6d4;
+    --adapter: #f59e0b;
+    --domain: #10b981;
+    --text: #e8e8f0;
+    --text-muted: #8888aa;
+    --text-dim: #5a5a7a;
+    --code-bg: #0d0d18;
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'Lora', serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--hex);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 17px;
+    line-height: 1.75;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.6;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 40%, rgba(124,58,237,0.18) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(6,182,212,0.10) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 20%, rgba(16,185,129,0.08) 0%, transparent 60%);
+    z-index: 0;
+  }
+
+  /* ── HEXAGON GRID BG ── */
+  .hex-grid-bg {
+    position: absolute;
+    inset: 0;
+    opacity: 0.06;
+    z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpolygon points='30,2 58,17 58,47 30,62 2,47 2,17' fill='none' stroke='%237c3aed' stroke-width='1'/%3E%3C/svg%3E");
+    background-size: 60px 52px;
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 820px; }
+
+  .hero-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-glow);
+    background: var(--accent-soft);
+    border: 1px solid rgba(124,58,237,0.35);
+    padding: 0.35rem 1rem;
+    border-radius: 2px;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: clamp(2.8rem, 8vw, 5.5rem);
+    font-weight: 800;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    animation: fadeUp 0.7s ease 0.1s both;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, var(--accent-glow) 0%, var(--port) 60%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: 1.15rem;
+    color: var(--text-muted);
+    max-width: 560px;
+    margin: 0 auto 3rem;
+    font-style: italic;
+    animation: fadeUp 0.7s ease 0.2s both;
+  }
+
+  .hero-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    animation: fadeUp 0.7s ease 0.3s both;
+  }
+
+  .hero-nav a {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    text-decoration: none;
+    color: var(--text-muted);
+    border: 1px solid var(--hex-border);
+    padding: 0.5rem 1.25rem;
+    border-radius: 2px;
+    transition: all 0.25s;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-nav a:hover {
+    color: var(--accent-glow);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 2.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    color: var(--text-dim);
+    letter-spacing: 0.1em;
+    animation: pulse 2.5s ease infinite;
+    z-index: 1;
+  }
+
+  /* ── LAYOUT ── */
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 2rem;
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    padding: 7rem 0;
+    position: relative;
+    border-top: 1px solid var(--hex-border);
+  }
+
+  .section-number {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-tag {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.75rem;
+    border-radius: 2px;
+    margin-bottom: 1.25rem;
+  }
+
+  .tag-o-que { color: var(--domain); background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); }
+  .tag-serve { color: var(--port); background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); }
+  .tag-usar  { color: var(--adapter); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); }
+  .tag-exemplo { color: var(--accent-glow); background: var(--accent-soft); border: 1px solid rgba(124,58,237,0.3); }
+
+  section h2 {
+    font-family: var(--font-head);
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    margin-bottom: 2.5rem;
+  }
+
+  section h3 {
+    font-family: var(--font-head);
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 2.5rem 0 1rem;
+  }
+
+  section p {
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── BIG HEX DIAGRAM ── */
+  .hex-diagram {
+    margin: 3rem 0;
+    display: flex;
+    justify-content: center;
+  }
+
+  .hex-diagram svg { max-width: 100%; }
+
+  /* ── CALLOUT BOXES ── */
+  .callout {
+    border-left: 3px solid;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+    background: var(--hex-surface);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .callout-domain { border-color: var(--domain); }
+  .callout-port   { border-color: var(--port); }
+  .callout-adapter{ border-color: var(--adapter); }
+  .callout-accent { border-color: var(--accent); }
+
+  .callout-title {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .callout-domain .callout-title { color: var(--domain); }
+  .callout-port   .callout-title { color: var(--port); }
+  .callout-adapter .callout-title { color: var(--adapter); }
+  .callout-accent .callout-title { color: var(--accent-glow); }
+
+  .callout p { margin: 0; font-size: 0.95rem; }
+
+  /* ── GRID CARDS ── */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .card {
+    background: var(--hex-surface);
+    border: 1px solid var(--hex-border);
+    padding: 1.5rem;
+    border-radius: 4px;
+    transition: border-color 0.25s;
+  }
+
+  .card:hover { border-color: var(--accent); }
+
+  .card-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .card h4 {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+
+  .card p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── CODE BLOCKS ── */
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.65;
+    position: relative;
+  }
+
+  .code-label {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .kw { color: #c084fc; }
+  .fn { color: #60a5fa; }
+  .str { color: #86efac; }
+  .cm { color: #4a4a6a; font-style: italic; }
+  .ty { color: #f9a8d4; }
+  .num { color: #fcd34d; }
+  .op { color: #94a3b8; }
+  .dt { color: var(--adapter); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--hex-surface);
+    border: 1px solid var(--hex-border);
+    padding: 0.1em 0.4em;
+    border-radius: 2px;
+    color: var(--accent-glow);
+  }
+
+  /* ── LAYERS VISUAL ── */
+  .layers {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 2.5rem 0;
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .layer {
+    padding: 1.25rem 1.75rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-bottom: 1px solid var(--hex-border);
+    transition: background 0.2s;
+  }
+
+  .layer:last-child { border-bottom: none; }
+  .layer:hover { background: rgba(255,255,255,0.02); }
+
+  .layer-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .layer-dot-domain  { background: var(--domain); box-shadow: 0 0 8px var(--domain); }
+  .layer-dot-port    { background: var(--port);   box-shadow: 0 0 8px var(--port); }
+  .layer-dot-adapter { background: var(--adapter); box-shadow: 0 0 8px var(--adapter); }
+
+  .layer-name {
+    font-family: var(--font-head);
+    font-size: 0.95rem;
+    font-weight: 700;
+    min-width: 130px;
+    color: var(--text);
+  }
+
+  .layer-desc {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+
+  /* ── COMPARISON TABLE ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin: 2rem 0;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+
+  th {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--hex-border);
+  }
+
+  td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+
+  tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .td-yes { color: var(--domain); font-family: var(--font-mono); font-size: 0.8rem; }
+  .td-no  { color: #ef4444; font-family: var(--font-mono); font-size: 0.8rem; }
+  .td-label { font-family: var(--font-head); font-weight: 700; color: var(--text); }
+
+  /* ── FLOW STEPS ── */
+  .steps {
+    margin: 2.5rem 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .step {
+    display: flex;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--hex-border);
+    align-items: flex-start;
+  }
+
+  .step:last-child { border-bottom: none; }
+
+  .step-num {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 300;
+    color: var(--accent);
+    min-width: 2.5rem;
+    line-height: 1;
+    padding-top: 0.15rem;
+  }
+
+  .step-content h4 {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 0.35rem;
+  }
+
+  .step-content p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── FLOW ARROWS ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 2.5rem 0;
+    flex-wrap: wrap;
+  }
+
+  .flow-box {
+    padding: 0.75rem 1.25rem;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-align: center;
+    flex: 1;
+    min-width: 110px;
+  }
+
+  .flow-box.domain  { background: rgba(16,185,129,0.15);  border: 1px solid rgba(16,185,129,0.4);  color: var(--domain); }
+  .flow-box.port    { background: rgba(6,182,212,0.15);   border: 1px solid rgba(6,182,212,0.4);   color: var(--port); }
+  .flow-box.adapter { background: rgba(245,158,11,0.15);  border: 1px solid rgba(245,158,11,0.4);  color: var(--adapter); }
+  .flow-box.infra   { background: rgba(124,58,237,0.15);  border: 1px solid rgba(124,58,237,0.4);  color: var(--accent-glow); }
+
+  .flow-arrow {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    padding: 0 0.35rem;
+    flex-shrink: 0;
+  }
+
+  /* ── STRUCTURE TREE ── */
+  .tree {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.9;
+    color: var(--text-muted);
+    background: var(--code-bg);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+  }
+
+  .tree .folder { color: var(--adapter); font-weight: 500; }
+  .tree .file   { color: var(--text-muted); }
+  .tree .domain-file { color: var(--domain); }
+  .tree .port-file   { color: var(--port); }
+  .tree .adapter-file{ color: var(--adapter); }
+
+  /* ── QUIZ ── */
+  .quiz {
+    background: var(--hex-surface);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    padding: 2rem;
+    margin: 2.5rem 0;
+  }
+
+  .quiz h3 {
+    font-family: var(--font-head);
+    font-size: 1.1rem;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-item {
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-q {
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    color: var(--accent-glow);
+    margin-bottom: 0.5rem;
+  }
+
+  .quiz-a {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    padding-left: 1rem;
+    border-left: 2px solid var(--hex-border);
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--hex-border);
+    padding: 4rem 0;
+    text-align: center;
+  }
+
+  footer p {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+  }
+
+  footer a {
+    color: var(--accent-glow);
+    text-decoration: none;
+  }
+
+  /* ── DIVIDER ── */
+  .divider {
+    border: none;
+    border-top: 1px solid var(--hex-border);
+    margin: 2rem 0;
+  }
+
+  /* ── HIGHLIGHT ── */
+  .highlight {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 640px) {
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .flow { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); }
+    .layer { flex-direction: column; gap: 0.75rem; }
+    .layer-name { min-width: unset; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HERO ── -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="hex-grid-bg"></div>
+  <div class="hero-content">
+    <span class="hero-badge">⬡ &nbsp; Guia de Estudos &nbsp; ⬡</span>
+    <h1>Arquitetura<br><span>Hexagonal</span></h1>
+    <p class="hero-sub">Ports &amp; Adapters — separe seu domínio do mundo externo e escreva software que dure.</p>
+    <nav class="hero-nav">
+      <a href="#o-que-e">O que é?</a>
+      <a href="#para-que-serve">Para que serve?</a>
+      <a href="#como-utilizar">Como utilizar?</a>
+      <a href="#exemplo-real">Exemplo real</a>
+      <a href="#resumo">Resumo</a>
+    </nav>
+  </div>
+  <span class="scroll-hint">▾ &nbsp; role para começar</span>
+</header>
+
+<!-- ══════════════════════════════════════
+     01 — O QUE É?
+══════════════════════════════════════ -->
+<section id="o-que-e">
+  <div class="container">
+    <div class="section-number">01 / 04</div>
+    <span class="section-tag tag-o-que">O que é?</span>
+    <h2>Arquitetura Hexagonal</h2>
+
+    <p>
+      Proposta em 2005 por <span class="highlight">Alistair Cockburn</span>, a <strong>Arquitetura Hexagonal</strong> — também chamada de <em>Ports &amp; Adapters</em> — é um padrão de design de software que organiza o sistema em torno de seu <strong>núcleo de negócios (domínio)</strong>, isolando-o completamente do mundo externo.
+    </p>
+    <p>
+      A ideia central é: <em>o domínio não deve saber quem está falando com ele</em>. Não importa se quem envia um comando é uma API REST, uma fila de mensagens, um CLI ou um teste automatizado — o domínio recebe, processa e responde através de interfaces bem definidas chamadas <strong>portas (ports)</strong>.
+    </p>
+
+    <div class="callout callout-accent">
+      <div class="callout-title">💡 A Metáfora do Hexágono</div>
+      <p>O hexágono não representa exatamente seis lados. Ele simboliza que o núcleo da aplicação pode ter <em>múltiplos pontos de entrada e saída</em>, todos tratados da mesma forma por meio de ports e adapters.</p>
+    </div>
+
+    <!-- Diagrama SVG do Hexágono -->
+    <div class="hex-diagram">
+      <svg viewBox="0 0 600 420" width="600" height="420" xmlns="http://www.w3.org/2000/svg" font-family="JetBrains Mono, monospace">
+        <!-- Outer adapters ring hints -->
+        <circle cx="300" cy="210" r="195" fill="none" stroke="#2a2a3f" stroke-width="1" stroke-dasharray="6 4"/>
+
+        <!-- Adapters (Driving - left) -->
+        <rect x="10" y="80"  width="110" height="38" rx="3" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.4)" stroke-width="1"/>
+        <text x="65" y="103" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">REST Controller</text>
+
+        <rect x="10" y="130" width="110" height="38" rx="3" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.4)" stroke-width="1"/>
+        <text x="65" y="153" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">CLI Adapter</text>
+
+        <rect x="10" y="180" width="110" height="38" rx="3" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.4)" stroke-width="1"/>
+        <text x="65" y="200" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">gRPC Adapter</text>
+
+        <rect x="10" y="230" width="110" height="38" rx="3" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.4)" stroke-width="1"/>
+        <text x="65" y="250" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">Test Adapter</text>
+
+        <rect x="10" y="280" width="110" height="38" rx="3" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.4)" stroke-width="1"/>
+        <text x="65" y="300" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="500">Message Consumer</text>
+
+        <!-- Adapters (Driven - right) -->
+        <rect x="480" y="80"  width="110" height="38" rx="3" fill="rgba(124,58,237,0.12)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+        <text x="535" y="103" text-anchor="middle" fill="#9d5ff0" font-size="10" font-weight="500">PostgreSQL Repo</text>
+
+        <rect x="480" y="130" width="110" height="38" rx="3" fill="rgba(124,58,237,0.12)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+        <text x="535" y="153" text-anchor="middle" fill="#9d5ff0" font-size="10" font-weight="500">Redis Cache</text>
+
+        <rect x="480" y="180" width="110" height="38" rx="3" fill="rgba(124,58,237,0.12)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+        <text x="535" y="200" text-anchor="middle" fill="#9d5ff0" font-size="10" font-weight="500">Email Service</text>
+
+        <rect x="480" y="230" width="110" height="38" rx="3" fill="rgba(124,58,237,0.12)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+        <text x="535" y="250" text-anchor="middle" fill="#9d5ff0" font-size="10" font-weight="500">Kafka Producer</text>
+
+        <rect x="480" y="280" width="110" height="38" rx="3" fill="rgba(124,58,237,0.12)" stroke="rgba(124,58,237,0.4)" stroke-width="1"/>
+        <text x="535" y="300" text-anchor="middle" fill="#9d5ff0" font-size="10" font-weight="500">S3 Storage</text>
+
+        <!-- Arrows left driving -->
+        <line x1="122" y1="99"  x2="160" y2="165" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="122" y1="149" x2="160" y2="185" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="122" y1="199" x2="162" y2="210" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="122" y1="249" x2="160" y2="235" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+        <line x1="122" y1="299" x2="160" y2="255" stroke="rgba(245,158,11,0.5)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+
+        <!-- Arrows right driven -->
+        <line x1="440" y1="165" x2="478" y2="99"  stroke="rgba(124,58,237,0.5)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+        <line x1="440" y1="185" x2="478" y2="149" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+        <line x1="440" y1="210" x2="478" y2="199" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+        <line x1="440" y1="235" x2="478" y2="249" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+        <line x1="440" y1="255" x2="478" y2="299" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" marker-end="url(#arr-purple)"/>
+
+        <!-- Port ring left -->
+        <rect x="155" y="145" width="65" height="130" rx="3" fill="rgba(6,182,212,0.07)" stroke="rgba(6,182,212,0.3)" stroke-width="1" stroke-dasharray="5 3"/>
+        <text x="188" y="136" text-anchor="middle" fill="#06b6d4" font-size="9" letter-spacing="1">PORTS IN</text>
+
+        <!-- Port ring right -->
+        <rect x="380" y="145" width="65" height="130" rx="3" fill="rgba(6,182,212,0.07)" stroke="rgba(6,182,212,0.3)" stroke-width="1" stroke-dasharray="5 3"/>
+        <text x="413" y="136" text-anchor="middle" fill="#06b6d4" font-size="9" letter-spacing="1">PORTS OUT</text>
+
+        <!-- Hexagon core -->
+        <polygon points="300,55 415,120 415,250 300,315 185,250 185,120"
+          fill="rgba(10,10,20,0.8)" stroke="#7c3aed" stroke-width="2"/>
+
+        <!-- Domain inner glow -->
+        <polygon points="300,90 385,138 385,232 300,280 215,232 215,138"
+          fill="rgba(124,58,237,0.06)" stroke="rgba(124,58,237,0.2)" stroke-width="1"/>
+
+        <!-- Core text -->
+        <text x="300" y="168" text-anchor="middle" fill="#e8e8f0" font-size="13" font-weight="700" font-family="Syne,sans-serif">DOMAIN</text>
+        <text x="300" y="188" text-anchor="middle" fill="#8888aa" font-size="9.5">Entities · Use Cases</text>
+        <text x="300" y="206" text-anchor="middle" fill="#8888aa" font-size="9.5">Business Rules</text>
+        <text x="300" y="225" text-anchor="middle" fill="#5a5a7a" font-size="8.5">zero external deps</text>
+
+        <!-- Labels outside -->
+        <text x="65" y="340" text-anchor="middle" fill="#f59e0b" font-size="9.5" font-weight="600">DRIVING ADAPTERS</text>
+        <text x="65" y="352" text-anchor="middle" fill="#8888aa" font-size="8.5">(Primary / Left)</text>
+
+        <text x="535" y="340" text-anchor="middle" fill="#9d5ff0" font-size="9.5" font-weight="600">DRIVEN ADAPTERS</text>
+        <text x="535" y="352" text-anchor="middle" fill="#8888aa" font-size="8.5">(Secondary / Right)</text>
+
+        <text x="300" y="370" text-anchor="middle" fill="#7c3aed" font-size="9.5" font-weight="600" letter-spacing="2">HEXAGONAL ARCHITECTURE</text>
+        <text x="300" y="383" text-anchor="middle" fill="#5a5a7a" font-size="8">Ports &amp; Adapters — Alistair Cockburn, 2005</text>
+
+        <!-- Arrow markers -->
+        <defs>
+          <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 Z" fill="rgba(245,158,11,0.7)"/>
+          </marker>
+          <marker id="arr-purple" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 Z" fill="rgba(124,58,237,0.7)"/>
+          </marker>
+        </defs>
+      </svg>
+    </div>
+
+    <h3>Os três elementos fundamentais</h3>
+
+    <div class="layers">
+      <div class="layer">
+        <span class="layer-dot layer-dot-domain"></span>
+        <span class="layer-name">Domain (Núcleo)</span>
+        <span class="layer-desc">O coração da aplicação. Contém entidades, regras de negócio e casos de uso. <strong>Não depende de nada externo</strong> — nem de banco de dados, nem de HTTP, nem de frameworks.</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-port"></span>
+        <span class="layer-name">Ports (Portas)</span>
+        <span class="layer-desc">Interfaces (contratos) que definem como o mundo externo pode conversar com o domínio (driving ports) e como o domínio conversa com o mundo externo (driven ports).</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-adapter"></span>
+        <span class="layer-name">Adapters (Adaptadores)</span>
+        <span class="layer-desc">Implementações concretas das portas. Traduzem o mundo externo (HTTP, SQL, arquivos) para a linguagem do domínio e vice-versa.</span>
+      </div>
+    </div>
+
+    <div class="callout callout-domain">
+      <div class="callout-title">⬡ Driving vs Driven</div>
+      <p><strong>Driving adapters</strong> (esquerda) <em>acionam</em> o domínio: REST controllers, CLIs, consumidores de mensagem. <strong>Driven adapters</strong> (direita) são <em>acionados</em> pelo domínio: repositórios de banco, serviços de e-mail, filas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     02 — PARA QUE SERVE?
+══════════════════════════════════════ -->
+<section id="para-que-serve">
+  <div class="container">
+    <div class="section-number">02 / 04</div>
+    <span class="section-tag tag-serve">Para que serve?</span>
+    <h2>Por que adotar essa arquitetura?</h2>
+
+    <p>
+      O problema que a Arquitetura Hexagonal resolve é clássico: à medida que um sistema cresce, o código de negócio fica <span class="highlight">enredado com detalhes técnicos</span> — queries SQL misturadas com lógica de validação, chamadas HTTP dentro de serviços de domínio, testes que precisam de banco de dados rodando. O resultado é um sistema frágil, difícil de testar e impossível de evoluir.
+    </p>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-icon">🧪</div>
+        <h4>Testabilidade radical</h4>
+        <p>Como o domínio não depende de nada, você testa toda a regra de negócio com mocks simples, sem banco de dados, sem servidor HTTP rodando.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🔄</div>
+        <h4>Troca de infraestrutura</h4>
+        <p>Trocar PostgreSQL por MongoDB? Migrar de REST para gRPC? Basta criar um novo adapter. O domínio não precisa nem saber que mudou.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🏗️</div>
+        <h4>Independência de framework</h4>
+        <p>O núcleo do seu negócio não é escravo de nenhum framework. O Express.js, NestJS ou Fastify é só mais um adapter na borda.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📐</div>
+        <h4>Regra de dependência clara</h4>
+        <p>As dependências sempre apontam <em>para dentro</em>. O domínio jamais importa algo da infraestrutura. A arquitetura impõe isso estruturalmente.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">🚀</div>
+        <h4>Múltiplas entradas</h4>
+        <p>A mesma regra de negócio pode ser acionada por uma API REST, uma fila de mensagens ou um cron job, sem duplicação de código.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📖</div>
+        <h4>Legibilidade e intenção</h4>
+        <p>Ler o domínio é ler o negócio. Não há SQL, não há JSON, não há HTTP. Código que conta a história da empresa.</p>
+      </div>
+    </div>
+
+    <h3>Comparação: código acoplado vs. hexagonal</h3>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cenário</th>
+            <th>Código acoplado</th>
+            <th>Hexagonal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="td-label">Testar regra de negócio</td>
+            <td>Precisa subir banco + servidor</td>
+            <td class="td-yes">✓ Só instanciar o use case</td>
+          </tr>
+          <tr>
+            <td class="td-label">Trocar banco de dados</td>
+            <td>Refatorar metade do código</td>
+            <td class="td-yes">✓ Criar novo Repository adapter</td>
+          </tr>
+          <tr>
+            <td class="td-label">Adicionar canal (CLI, fila)</td>
+            <td>Copiar/colar lógica de negócio</td>
+            <td class="td-yes">✓ Novo driving adapter</td>
+          </tr>
+          <tr>
+            <td class="td-label">Trocar framework web</td>
+            <td>Reescrever a aplicação</td>
+            <td class="td-yes">✓ Novo HTTP adapter</td>
+          </tr>
+          <tr>
+            <td class="td-label">Entender o negócio pelo código</td>
+            <td class="td-no">✗ Lógica espalhada</td>
+            <td class="td-yes">✓ Domain é autoexplicativo</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-port">
+      <div class="callout-title">⚠️ Quando NÃO usar</div>
+      <p>Hexagonal adiciona camadas e indireção. Para microsserviços pequenos, scripts, provas de conceito ou CRUDs simples, pode ser overhead desnecessário. Use quando a <strong>complexidade do domínio justifica</strong> o investimento.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     03 — COMO UTILIZAR?
+══════════════════════════════════════ -->
+<section id="como-utilizar">
+  <div class="container">
+    <div class="section-number">03 / 04</div>
+    <span class="section-tag tag-usar">Como utilizar?</span>
+    <h2>Estrutura e implementação</h2>
+
+    <p>
+      A implementação começa pela definição da estrutura de pastas e, mais importante, pela <strong>regra de ouro</strong>: o domínio nunca importa da infraestrutura. Veja como organizar e implementar cada camada.
+    </p>
+
+    <h3>Estrutura de pastas recomendada</h3>
+
+    <div class="tree">
+<span class="folder">src/</span>
+├── <span class="folder">domain/</span>                    <span class="cm">← núcleo, zero dependências externas</span>
+│   ├── <span class="folder">entities/</span>
+│   │   └── <span class="domain-file">Order.ts</span>
+│   ├── <span class="folder">value-objects/</span>
+│   │   └── <span class="domain-file">Money.ts</span>
+│   ├── <span class="folder">ports/</span>
+│   │   ├── <span class="port-file">in/</span>             <span class="cm">← driving ports (interfaces de entrada)</span>
+│   │   │   └── <span class="port-file">CreateOrderPort.ts</span>
+│   │   └── <span class="port-file">out/</span>            <span class="cm">← driven ports (interfaces de saída)</span>
+│   │       ├── <span class="port-file">OrderRepositoryPort.ts</span>
+│   │       └── <span class="port-file">NotificationPort.ts</span>
+│   └── <span class="folder">use-cases/</span>
+│       └── <span class="domain-file">CreateOrderUseCase.ts</span>
+│
+├── <span class="folder">adapters/</span>                  <span class="cm">← implementações concretas</span>
+│   ├── <span class="folder">in/</span>                    <span class="cm">← driving adapters</span>
+│   │   ├── <span class="adapter-file">http/OrderController.ts</span>
+│   │   └── <span class="adapter-file">queue/OrderConsumer.ts</span>
+│   └── <span class="folder">out/</span>                   <span class="cm">← driven adapters</span>
+│       ├── <span class="adapter-file">persistence/PgOrderRepository.ts</span>
+│       └── <span class="adapter-file">notification/SendGridAdapter.ts</span>
+│
+└── <span class="folder">infrastructure/</span>            <span class="cm">← config, DI, bootstrap</span>
+    ├── <span class="file">container.ts</span>
+    └── <span class="file">server.ts</span>
+    </div>
+
+    <h3>O fluxo de dados</h3>
+
+    <div class="flow">
+      <div class="flow-box adapter">HTTP Request<br><small>(Controller)</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box port">Port IN<br><small>(Interface)</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box domain">Use Case<br><small>(Domain)</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box port">Port OUT<br><small>(Interface)</small></div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-box infra">Repository<br><small>(DB Adapter)</small></div>
+    </div>
+
+    <h3>Passo a passo de implementação</h3>
+
+    <div class="steps">
+      <div class="step">
+        <span class="step-num">01</span>
+        <div class="step-content">
+          <h4>Modele as entidades do domínio</h4>
+          <p>Comece pelas entidades e value objects. Eles representam conceitos do negócio, têm identidade ou valor e não têm nenhuma dependência externa.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">02</span>
+        <div class="step-content">
+          <h4>Defina os Ports de saída (out)</h4>
+          <p>O use case precisa de dados externos? Defina uma interface (Port OUT) que descreva o contrato, sem mencionar tecnologia alguma.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">03</span>
+        <div class="step-content">
+          <h4>Implemente os Use Cases</h4>
+          <p>O use case recebe os ports por injeção de dependência e orquestra a lógica. Ele só conhece interfaces, nunca implementações.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">04</span>
+        <div class="step-content">
+          <h4>Defina os Ports de entrada (in)</h4>
+          <p>Crie interfaces que expõem as operações do domínio para o mundo externo. Os use cases implementam essas interfaces.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">05</span>
+        <div class="step-content">
+          <h4>Implemente os Adapters</h4>
+          <p>Agora implemente as infraestruturas concretas: o repository que faz SQL, o controller HTTP, o consumidor de fila, etc.</p>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-num">06</span>
+        <div class="step-content">
+          <h4>Monte o container de DI</h4>
+          <p>Na camada de infraestrutura, conecte tudo: injete os adapters nos use cases, registre rotas, configure o servidor.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Código: Port de Saída (interface)</h3>
+
+    <pre><code><span class="cm">// domain/ports/out/OrderRepositoryPort.ts</span>
+<span class="cm">// Uma interface pura — sem import de ORM, SQL ou qualquer framework</span>
+
+<span class="kw">export interface</span> <span class="ty">OrderRepositoryPort</span> {
+  <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
+  <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt;;
+  <span class="fn">findByCustomerId</span>(customerId: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span>[]&gt;;
+}</code><span class="code-label">port / out</span></pre>
+
+    <h3>Código: Use Case do domínio</h3>
+
+    <pre><code><span class="cm">// domain/use-cases/CreateOrderUseCase.ts</span>
+<span class="cm">// O coração: recebe ports por injeção, sem depender de implementações</span>
+
+<span class="kw">export class</span> <span class="ty">CreateOrderUseCase</span> <span class="kw">implements</span> <span class="ty">CreateOrderPort</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private readonly</span> orderRepo:    <span class="ty">OrderRepositoryPort</span>,
+    <span class="kw">private readonly</span> notification: <span class="ty">NotificationPort</span>,
+  ) {}
+
+  <span class="kw">async</span> <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span>&gt; {
+    <span class="cm">// 1. Validação e criação da entidade (regra de negócio pura)</span>
+    <span class="kw">const</span> order = <span class="ty">Order</span>.<span class="fn">create</span>({
+      customerId: input.customerId,
+      items:      input.items,
+    });
+
+    <span class="cm">// 2. Persistência via port (não sabe que é PostgreSQL)</span>
+    <span class="kw">await</span> <span class="kw">this</span>.orderRepo.<span class="fn">save</span>(order);
+
+    <span class="cm">// 3. Notificação via port (não sabe que é SendGrid)</span>
+    <span class="kw">await</span> <span class="kw">this</span>.notification.<span class="fn">orderCreated</span>(order);
+
+    <span class="kw">return</span> order;
+  }
+}</code><span class="code-label">use case</span></pre>
+
+    <h3>Código: Adapter de entrada (HTTP Controller)</h3>
+
+    <pre><code><span class="cm">// adapters/in/http/OrderController.ts</span>
+<span class="cm">// Traduz HTTP → chamada ao domínio. Sabe de Express, não do negócio.</span>
+
+<span class="kw">export class</span> <span class="ty">OrderController</span> {
+  <span class="kw">constructor</span>(<span class="kw">private readonly</span> createOrder: <span class="ty">CreateOrderPort</span>) {}
+
+  <span class="fn">register</span>(router: <span class="ty">Router</span>): <span class="ty">void</span> {
+    router.<span class="fn">post</span>(<span class="str">'/orders'</span>, <span class="kw">async</span> (req, res) => {
+      <span class="kw">try</span> {
+        <span class="kw">const</span> order = <span class="kw">await</span> <span class="kw">this</span>.createOrder.<span class="fn">execute</span>({
+          customerId: req.body.customerId,
+          items:      req.body.items,
+        });
+        res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ id: order.id });
+      } <span class="kw">catch</span> (err) {
+        res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ error: err.message });
+      }
+    });
+  }
+}</code><span class="code-label">adapter / in</span></pre>
+
+    <h3>Código: Adapter de saída (PostgreSQL Repository)</h3>
+
+    <pre><code><span class="cm">// adapters/out/persistence/PgOrderRepository.ts</span>
+<span class="cm">// Implementa o port. Aqui sim pode usar ORM, SQL, o que quiser.</span>
+
+<span class="kw">export class</span> <span class="ty">PgOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
+  <span class="kw">constructor</span>(<span class="kw">private readonly</span> db: <span class="ty">Pool</span>) {}
+
+  <span class="kw">async</span> <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt; {
+    <span class="kw">await</span> <span class="kw">this</span>.db.<span class="fn">query</span>(
+      <span class="str">`INSERT INTO orders (id, customer_id, total, status)
+       VALUES ($1, $2, $3, $4)`</span>,
+      [order.id, order.customerId, order.total, order.status],
+    );
+  }
+
+  <span class="kw">async</span> <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt; {
+    <span class="kw">const</span> { rows } = <span class="kw">await</span> <span class="kw">this</span>.db.<span class="fn">query</span>(
+      <span class="str">'SELECT * FROM orders WHERE id = $1'</span>, [id]
+    );
+    <span class="kw">return</span> rows[<span class="num">0</span>] ? <span class="ty">OrderMapper</span>.<span class="fn">toDomain</span>(rows[<span class="num">0</span>]) : <span class="kw">null</span>;
+  }
+}</code><span class="code-label">adapter / out</span></pre>
+
+    <div class="callout callout-adapter">
+      <div class="callout-title">🔑 A regra de ouro</div>
+      <p>Se você está escrevendo código no <code>domain/</code> e sente vontade de importar algo de <code>adapters/</code> ou de um pacote de infraestrutura (Prisma, Axios, pg), <strong>pare</strong>. Isso é um sinal de que você rompeu a arquitetura. Crie um port.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     04 — EXEMPLO REAL
+══════════════════════════════════════ -->
+<section id="exemplo-real">
+  <div class="container">
+    <div class="section-number">04 / 04</div>
+    <span class="section-tag tag-exemplo">Exemplo real</span>
+    <h2>Sistema de pedidos em Node.js</h2>
+
+    <p>
+      Vamos construir um sistema de <strong>criação de pedidos</strong> completo com Arquitetura Hexagonal em Node.js + TypeScript. O sistema aceita pedidos via HTTP, persiste no banco e envia um e-mail de confirmação.
+    </p>
+
+    <div class="callout callout-accent">
+      <div class="callout-title">📦 Contexto do sistema</div>
+      <p>Uma loja online precisa de um endpoint <code>POST /orders</code> que: valide o pedido, calcule o total, salve no PostgreSQL e notifique o cliente por e-mail. Deve ser testável sem banco e facilmente migrável para outro banco no futuro.</p>
+    </div>
+
+    <h3>1. A Entidade de Domínio</h3>
+
+    <pre><code><span class="cm">// domain/entities/Order.ts</span>
+
+<span class="kw">export class</span> <span class="ty">Order</span> {
+  <span class="kw">private constructor</span>(
+    <span class="kw">public readonly</span> id:         <span class="ty">string</span>,
+    <span class="kw">public readonly</span> customerId: <span class="ty">string</span>,
+    <span class="kw">public readonly</span> items:      <span class="ty">OrderItem</span>[],
+    <span class="kw">public readonly</span> total:      <span class="ty">number</span>,
+    <span class="kw">public</span>          status:     <span class="ty">OrderStatus</span>,
+    <span class="kw">public readonly</span> createdAt:  <span class="ty">Date</span>,
+  ) {}
+
+  <span class="cm">// Factory method — encapsula as regras de criação</span>
+  <span class="kw">static</span> <span class="fn">create</span>(data: <span class="ty">CreateOrderData</span>): <span class="ty">Order</span> {
+    <span class="kw">if</span> (data.items.length === <span class="num">0</span>) {
+      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Um pedido precisa ter ao menos um item.'</span>);
+    }
+
+    <span class="kw">const</span> total = data.items.<span class="fn">reduce</span>(
+      (sum, item) => sum + item.price * item.quantity, <span class="num">0</span>
+    );
+
+    <span class="kw">if</span> (total <= <span class="num">0</span>) {
+      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Total do pedido deve ser positivo.'</span>);
+    }
+
+    <span class="kw">return new</span> <span class="ty">Order</span>(
+      <span class="fn">generateId</span>(),
+      data.customerId,
+      data.items,
+      total,
+      <span class="str">'PENDING'</span>,
+      <span class="kw">new</span> <span class="ty">Date</span>(),
+    );
+  }
+
+  <span class="fn">confirm</span>(): <span class="ty">void</span> {
+    <span class="kw">if</span> (<span class="kw">this</span>.status !== <span class="str">'PENDING'</span>) {
+      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Apenas pedidos pendentes podem ser confirmados.'</span>);
+    }
+    <span class="kw">this</span>.status = <span class="str">'CONFIRMED'</span>;
+  }
+}</code><span class="code-label">entity</span></pre>
+
+    <h3>2. As Interfaces (Ports)</h3>
+
+    <pre><code><span class="cm">// domain/ports/out/OrderRepositoryPort.ts</span>
+<span class="kw">export interface</span> <span class="ty">OrderRepositoryPort</span> {
+  <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
+  <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt;;
+}
+
+<span class="cm">// domain/ports/out/NotificationPort.ts</span>
+<span class="kw">export interface</span> <span class="ty">NotificationPort</span> {
+  <span class="fn">sendOrderConfirmation</span>(order: <span class="ty">Order</span>, email: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
+}
+
+<span class="cm">// domain/ports/in/CreateOrderPort.ts</span>
+<span class="kw">export interface</span> <span class="ty">CreateOrderPort</span> {
+  <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">CreateOrderOutput</span>&gt;;
+}</code><span class="code-label">ports</span></pre>
+
+    <h3>3. O Use Case</h3>
+
+    <pre><code><span class="cm">// domain/use-cases/CreateOrderUseCase.ts</span>
+
+<span class="kw">export class</span> <span class="ty">CreateOrderUseCase</span> <span class="kw">implements</span> <span class="ty">CreateOrderPort</span> {
+  <span class="kw">constructor</span>(
+    <span class="kw">private readonly</span> orderRepo:    <span class="ty">OrderRepositoryPort</span>,
+    <span class="kw">private readonly</span> notification: <span class="ty">NotificationPort</span>,
+    <span class="kw">private readonly</span> customerRepo: <span class="ty">CustomerRepositoryPort</span>,
+  ) {}
+
+  <span class="kw">async</span> <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">CreateOrderOutput</span>&gt; {
+    <span class="cm">// Busca o cliente (port, não sabe qual banco)</span>
+    <span class="kw">const</span> customer = <span class="kw">await</span> <span class="kw">this</span>.customerRepo.<span class="fn">findById</span>(input.customerId);
+    <span class="kw">if</span> (!customer) <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Cliente não encontrado.'</span>);
+
+    <span class="cm">// Cria e valida o pedido (regra de negócio pura)</span>
+    <span class="kw">const</span> order = <span class="ty">Order</span>.<span class="fn">create</span>({
+      customerId: customer.id,
+      items:      input.items,
+    });
+
+    <span class="cm">// Persiste (port)</span>
+    <span class="kw">await</span> <span class="kw">this</span>.orderRepo.<span class="fn">save</span>(order);
+
+    <span class="cm">// Notifica (port)</span>
+    <span class="kw">await</span> <span class="kw">this</span>.notification.<span class="fn">sendOrderConfirmation</span>(order, customer.email);
+
+    <span class="kw">return</span> { orderId: order.id, total: order.total, status: order.status };
+  }
+}</code><span class="code-label">use case</span></pre>
+
+    <h3>4. Adapter de Saída — PostgreSQL</h3>
+
+    <pre><code><span class="cm">// adapters/out/persistence/PgOrderRepository.ts</span>
+
+<span class="kw">export class</span> <span class="ty">PgOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
+  <span class="kw">constructor</span>(<span class="kw">private readonly</span> pool: <span class="ty">Pool</span>) {}
+
+  <span class="kw">async</span> <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt; {
+    <span class="kw">await</span> <span class="kw">this</span>.pool.<span class="fn">query</span>(
+      <span class="str">`INSERT INTO orders (id, customer_id, items, total, status, created_at)
+       VALUES ($1, $2, $3, $4, $5, $6)`</span>,
+      [
+        order.id,
+        order.customerId,
+        <span class="ty">JSON</span>.<span class="fn">stringify</span>(order.items),
+        order.total,
+        order.status,
+        order.createdAt,
+      ]
+    );
+  }
+
+  <span class="kw">async</span> <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt; {
+    <span class="kw">const</span> { rows } = <span class="kw">await</span> <span class="kw">this</span>.pool.<span class="fn">query</span>(
+      <span class="str">'SELECT * FROM orders WHERE id = $1'</span>, [id]
+    );
+    <span class="kw">return</span> rows[<span class="num">0</span>] ? <span class="ty">OrderMapper</span>.<span class="fn">toDomain</span>(rows[<span class="num">0</span>]) : <span class="kw">null</span>;
+  }
+}</code><span class="code-label">adapter / out</span></pre>
+
+    <h3>5. Adapter de Entrada — HTTP Controller</h3>
+
+    <pre><code><span class="cm">// adapters/in/http/OrderController.ts</span>
+
+<span class="kw">export class</span> <span class="ty">OrderController</span> {
+  <span class="kw">constructor</span>(<span class="kw">private readonly</span> createOrder: <span class="ty">CreateOrderPort</span>) {}
+
+  <span class="fn">register</span>(router: <span class="ty">Router</span>): <span class="ty">void</span> {
+    router.<span class="fn">post</span>(<span class="str">'/orders'</span>, <span class="kw">async</span> (req: <span class="ty">Request</span>, res: <span class="ty">Response</span>) => {
+      <span class="kw">try</span> {
+        <span class="kw">const</span> result = <span class="kw">await</span> <span class="kw">this</span>.createOrder.<span class="fn">execute</span>({
+          customerId: req.body.customerId,
+          items:      req.body.items,
+        });
+
+        res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(result);
+
+      } <span class="kw">catch</span> (err) {
+        <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="ty">DomainError</span>) {
+          <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">422</span>).<span class="fn">json</span>({ error: err.message });
+        }
+        res.<span class="fn">status</span>(<span class="num">500</span>).<span class="fn">json</span>({ error: <span class="str">'Erro interno'</span> });
+      }
+    });
+  }
+}</code><span class="code-label">adapter / in</span></pre>
+
+    <h3>6. Montagem do Container de DI</h3>
+
+    <pre><code><span class="cm">// infrastructure/container.ts</span>
+<span class="cm">// Este é o único lugar onde tudo se conecta</span>
+
+<span class="kw">const</span> pool = <span class="kw">new</span> <span class="ty">Pool</span>({ connectionString: process.env.DATABASE_URL });
+
+<span class="cm">// Adapters (implementações concretas)</span>
+<span class="kw">const</span> orderRepo     = <span class="kw">new</span> <span class="ty">PgOrderRepository</span>(pool);
+<span class="kw">const</span> customerRepo  = <span class="kw">new</span> <span class="ty">PgCustomerRepository</span>(pool);
+<span class="kw">const</span> notification  = <span class="kw">new</span> <span class="ty">SendGridNotificationAdapter</span>(process.env.SENDGRID_KEY);
+
+<span class="cm">// Use Cases (domínio recebe os ports)</span>
+<span class="kw">const</span> createOrderUseCase = <span class="kw">new</span> <span class="ty">CreateOrderUseCase</span>(
+  orderRepo,
+  notification,
+  customerRepo,
+);
+
+<span class="cm">// Controllers (driving adapters recebem o use case)</span>
+<span class="kw">const</span> orderController = <span class="kw">new</span> <span class="ty">OrderController</span>(createOrderUseCase);
+
+<span class="kw">export</span> { orderController };</code><span class="code-label">DI container</span></pre>
+
+    <h3>7. Teste unitário — sem banco, sem HTTP</h3>
+
+    <pre><code><span class="cm">// tests/unit/CreateOrderUseCase.test.ts</span>
+<span class="cm">// Testamos o domínio com mocks simples — rápido e confiável</span>
+
+<span class="fn">describe</span>(<span class="str">'CreateOrderUseCase'</span>, () => {
+  <span class="kw">let</span> useCase:       <span class="ty">CreateOrderUseCase</span>;
+  <span class="kw">let</span> orderRepo:     <span class="fn">jest.Mocked</span>&lt;<span class="ty">OrderRepositoryPort</span>&gt;;
+  <span class="kw">let</span> notification:  <span class="fn">jest.Mocked</span>&lt;<span class="ty">NotificationPort</span>&gt;;
+  <span class="kw">let</span> customerRepo:  <span class="fn">jest.Mocked</span>&lt;<span class="ty">CustomerRepositoryPort</span>&gt;;
+
+  <span class="fn">beforeEach</span>(() => {
+    orderRepo    = { save: <span class="fn">jest.fn</span>(), findById: <span class="fn">jest.fn</span>() };
+    notification = { sendOrderConfirmation: <span class="fn">jest.fn</span>() };
+    customerRepo = { findById: <span class="fn">jest.fn</span>() };
+
+    <span class="cm">// Mock do cliente</span>
+    customerRepo.findById.<span class="fn">mockResolvedValue</span>({
+      id: <span class="str">'customer-1'</span>,
+      email: <span class="str">'joao@email.com'</span>,
+      name: <span class="str">'João'</span>,
+    });
+
+    useCase = <span class="kw">new</span> <span class="ty">CreateOrderUseCase</span>(orderRepo, notification, customerRepo);
+  });
+
+  <span class="fn">it</span>(<span class="str">'deve criar pedido e notificar o cliente'</span>, <span class="kw">async</span> () => {
+    <span class="kw">const</span> result = <span class="kw">await</span> useCase.<span class="fn">execute</span>({
+      customerId: <span class="str">'customer-1'</span>,
+      items: [{ productId: <span class="str">'p1'</span>, price: <span class="num">50</span>, quantity: <span class="num">2</span> }],
+    });
+
+    <span class="fn">expect</span>(result.total).<span class="fn">toBe</span>(<span class="num">100</span>);
+    <span class="fn">expect</span>(result.status).<span class="fn">toBe</span>(<span class="str">'PENDING'</span>);
+    <span class="fn">expect</span>(orderRepo.save).<span class="fn">toHaveBeenCalledTimes</span>(<span class="num">1</span>);
+    <span class="fn">expect</span>(notification.sendOrderConfirmation).<span class="fn">toHaveBeenCalledTimes</span>(<span class="num">1</span>);
+  });
+
+  <span class="fn">it</span>(<span class="str">'deve rejeitar pedido sem itens'</span>, <span class="kw">async</span> () => {
+    <span class="kw">await</span> <span class="fn">expect</span>(
+      useCase.<span class="fn">execute</span>({ customerId: <span class="str">'customer-1'</span>, items: [] })
+    ).<span class="fn">rejects.toThrow</span>(<span class="str">'Um pedido precisa ter ao menos um item.'</span>);
+
+    <span class="fn">expect</span>(orderRepo.save).<span class="fn">not.toHaveBeenCalled</span>();
+  });
+});</code><span class="code-label">unit test</span></pre>
+
+    <div class="callout callout-domain">
+      <div class="callout-title">✅ O que esse teste prova</div>
+      <p>Testamos <strong>100% da lógica de negócio</strong> sem banco de dados, sem servidor HTTP, sem variáveis de ambiente. O teste roda em milissegundos e não depende de nenhuma infraestrutura. Isso é o poder da Arquitetura Hexagonal.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════
+     RESUMO
+══════════════════════════════════════ -->
+<section id="resumo">
+  <div class="container">
+    <span class="section-tag tag-o-que">Resumo</span>
+    <h2>O que fixar</h2>
+
+    <div class="quiz">
+      <h3>Perguntas para autoavaliação</h3>
+
+      <div class="quiz-item">
+        <div class="quiz-q">→ O que são Ports e para que servem?</div>
+        <div class="quiz-a">São interfaces (contratos) que definem como o domínio se comunica com o exterior. Ports IN definem operações que o domínio expõe; Ports OUT definem o que o domínio precisa do exterior.</div>
+      </div>
+
+      <div class="quiz-item">
+        <div class="quiz-q">→ Qual é a regra de dependência fundamental?</div>
+        <div class="quiz-a">As dependências sempre apontam para dentro: adapters dependem de ports, ports pertencem ao domínio, o domínio não depende de nada externo.</div>
+      </div>
+
+      <div class="quiz-item">
+        <div class="quiz-q">→ O que é um Driving Adapter vs. Driven Adapter?</div>
+        <div class="quiz-a">Driving adapters acionam o domínio (HTTP controller, CLI, consumer de fila). Driven adapters são acionados pelo domínio (repositório de banco, serviço de e-mail, API externa).</div>
+      </div>
+
+      <div class="quiz-item">
+        <div class="quiz-q">→ Como você testaria o domínio sem banco de dados?</div>
+        <div class="quiz-a">Criando mocks dos ports de saída e injetando-os no use case. Como o domínio depende apenas de interfaces, qualquer objeto que implemente a interface serve como substituto.</div>
+      </div>
+
+      <div class="quiz-item">
+        <div class="quiz-q">→ Se precisar trocar de PostgreSQL para MongoDB, o que muda?</div>
+        <div class="quiz-a">Apenas o adapter de saída (a classe que implementa OrderRepositoryPort). O domínio, os use cases e todos os outros adapters permanecem idênticos.</div>
+      </div>
+    </div>
+
+    <h3>Conceitos-chave em uma linha</h3>
+
+    <div class="layers">
+      <div class="layer">
+        <span class="layer-dot layer-dot-domain"></span>
+        <span class="layer-name">Domain</span>
+        <span class="layer-desc">Entidades, value objects, use cases e regras de negócio. Zero dependências externas.</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-port"></span>
+        <span class="layer-name">Port IN</span>
+        <span class="layer-desc">Interface que expõe uma operação do domínio para o exterior. Implementada pelo use case.</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-port"></span>
+        <span class="layer-name">Port OUT</span>
+        <span class="layer-desc">Interface que o domínio usa para acessar recursos externos. Implementada pelo adapter.</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-adapter"></span>
+        <span class="layer-name">Driving Adapter</span>
+        <span class="layer-desc">Acionador do domínio: HTTP controller, CLI, consumer de mensagem, test runner.</span>
+      </div>
+      <div class="layer">
+        <span class="layer-dot layer-dot-adapter"></span>
+        <span class="layer-name">Driven Adapter</span>
+        <span class="layer-desc">Acionado pelo domínio: PostgreSQL, Redis, SendGrid, S3, Kafka producer.</span>
+      </div>
+    </div>
+
+    <h3>Leituras recomendadas</h3>
+    <div class="grid-3">
+      <div class="card">
+        <div class="card-icon">📝</div>
+        <h4>Artigo original</h4>
+        <p>Alistair Cockburn, 2005 — "Hexagonal Architecture". O manifesto que iniciou tudo.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📗</div>
+        <h4>Clean Architecture</h4>
+        <p>Robert C. Martin (Uncle Bob) — o livro que consolidou esses conceitos na mainstream.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📘</div>
+        <h4>Get Your Hands Dirty on Clean Architecture</h4>
+        <p>Tom Hombergs — implementação prática em Java/Kotlin, altamente acessível.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <p>Material de estudos — Arquitetura Hexagonal &nbsp;·&nbsp; Ports &amp; Adapters</p>
+    <p style="margin-top:0.5rem">Série: BMAD &nbsp;→&nbsp; BFF &nbsp;→&nbsp; <strong style="color:var(--accent-glow)">Hexagonal</strong></p>
+  </div>
+</footer>
+
+</body>
+</html>
