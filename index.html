@@ -629,7 +629,7 @@
   <div class="hero-content">
     <span class="hero-badge">⬡ &nbsp; Guia de Estudos &nbsp; ⬡</span>
     <h1>Arquitetura<br><span>Hexagonal</span></h1>
-    <p class="hero-sub">Ports &amp; Adapters — separe seu domínio do mundo externo e escreva software que dure.</p>
+    <p class="hero-sub">Ports &amp; Adapters com Java &amp; Spring Boot — separe seu domínio do mundo externo e escreva software que dure.</p>
     <nav class="hero-nav">
       <a href="#o-que-e">O que é?</a>
       <a href="#para-que-serve">Para que serve?</a>
@@ -812,7 +812,7 @@
       <div class="card">
         <div class="card-icon">🏗️</div>
         <h4>Independência de framework</h4>
-        <p>O núcleo do seu negócio não é escravo de nenhum framework. O Express.js, NestJS ou Fastify é só mais um adapter na borda.</p>
+        <p>O núcleo do seu negócio não é escravo do Spring. O Spring Boot, Quarkus ou Micronaut é só mais um detalhe na borda — um adapter que poderia ser trocado sem tocar no domínio.</p>
       </div>
       <div class="card">
         <div class="card-icon">📐</div>
@@ -895,44 +895,53 @@
     <h3>Estrutura de pastas recomendada</h3>
 
     <pre class="tree"><span class="folder">src/</span>
-├── <span class="folder">domain/</span>                       <span class="cm">← núcleo, zero dependências externas</span>
-│   ├── <span class="folder">entities/</span>
-│   │   └── <span class="domain-file">Order.ts</span>
-│   ├── <span class="folder">value-objects/</span>
-│   │   └── <span class="domain-file">Money.ts</span>
-│   ├── <span class="folder">ports/</span>
-│   │   ├── <span class="folder">in/</span>                    <span class="cm">← driving ports (interfaces de entrada)</span>
-│   │   │   └── <span class="port-file">CreateOrderPort.ts</span>
-│   │   └── <span class="folder">out/</span>                   <span class="cm">← driven ports (interfaces de saída)</span>
-│   │       ├── <span class="port-file">OrderRepositoryPort.ts</span>
-│   │       └── <span class="port-file">NotificationPort.ts</span>
-│   └── <span class="folder">use-cases/</span>
-│       └── <span class="domain-file">CreateOrderUseCase.ts</span>
+├── <span class="folder">main/java/com/empresa/pedidos/</span>
+│   ├── <span class="folder">domain/</span>                          <span class="cm">← núcleo, zero dependências do Spring</span>
+│   │   ├── <span class="folder">entity/</span>
+│   │   │   └── <span class="domain-file">Order.java</span>
+│   │   ├── <span class="folder">vo/</span>
+│   │   │   └── <span class="domain-file">Money.java</span>
+│   │   ├── <span class="folder">exception/</span>
+│   │   │   └── <span class="domain-file">DomainException.java</span>
+│   │   ├── <span class="folder">port/</span>
+│   │   │   ├── <span class="folder">in/</span>                      <span class="cm">← driving ports (interfaces de entrada)</span>
+│   │   │   │   └── <span class="port-file">CreateOrderUseCase.java</span>
+│   │   │   └── <span class="folder">out/</span>                     <span class="cm">← driven ports (interfaces de saída)</span>
+│   │   │       ├── <span class="port-file">OrderRepositoryPort.java</span>
+│   │   │       ├── <span class="port-file">CustomerRepositoryPort.java</span>
+│   │   │       └── <span class="port-file">NotificationPort.java</span>
+│   │   └── <span class="folder">service/</span>                     <span class="cm">← implementa ports IN (use cases)</span>
+│   │       └── <span class="domain-file">CreateOrderService.java</span>
+│   │
+│   ├── <span class="folder">adapter/</span>                         <span class="cm">← implementações concretas</span>
+│   │   ├── <span class="folder">in/</span>                          <span class="cm">← driving adapters</span>
+│   │   │   ├── <span class="adapter-file">web/OrderController.java</span>
+│   │   │   └── <span class="adapter-file">queue/OrderConsumer.java</span>
+│   │   └── <span class="folder">out/</span>                         <span class="cm">← driven adapters</span>
+│   │       ├── <span class="adapter-file">persistence/JpaOrderRepository.java</span>
+│   │       ├── <span class="adapter-file">persistence/OrderEntity.java</span>
+│   │       └── <span class="adapter-file">notification/MailjetNotificationAdapter.java</span>
+│   │
+│   └── <span class="folder">infrastructure/</span>                  <span class="cm">← config Spring, beans, bootstrap</span>
+│       └── <span class="folder">config/</span>
+│           └── <span class="file">BeanConfiguration.java</span>
 │
-├── <span class="folder">adapters/</span>                     <span class="cm">← implementações concretas</span>
-│   ├── <span class="folder">in/</span>                       <span class="cm">← driving adapters</span>
-│   │   ├── <span class="adapter-file">http/OrderController.ts</span>
-│   │   └── <span class="adapter-file">queue/OrderConsumer.ts</span>
-│   └── <span class="folder">out/</span>                      <span class="cm">← driven adapters</span>
-│       ├── <span class="adapter-file">persistence/PgOrderRepository.ts</span>
-│       └── <span class="adapter-file">notification/SendGridAdapter.ts</span>
-│
-└── <span class="folder">infrastructure/</span>               <span class="cm">← config, DI, bootstrap</span>
-    ├── <span class="file">container.ts</span>
-    └── <span class="file">server.ts</span></pre>
+└── <span class="folder">test/java/com/empresa/pedidos/</span>
+    └── <span class="folder">domain/service/</span>
+        └── <span class="file">CreateOrderServiceTest.java</span></pre>
 
     <h3>O fluxo de dados</h3>
 
     <div class="flow">
-      <div class="flow-box adapter">HTTP Request<br><small>(Controller)</small></div>
+      <div class="flow-box adapter">@RestController<br><small>(HTTP Adapter)</small></div>
       <span class="flow-arrow">→</span>
       <div class="flow-box port">Port IN<br><small>(Interface)</small></div>
       <span class="flow-arrow">→</span>
-      <div class="flow-box domain">Use Case<br><small>(Domain)</small></div>
+      <div class="flow-box domain">@Service<br><small>(Domain)</small></div>
       <span class="flow-arrow">→</span>
       <div class="flow-box port">Port OUT<br><small>(Interface)</small></div>
       <span class="flow-arrow">→</span>
-      <div class="flow-box infra">Repository<br><small>(DB Adapter)</small></div>
+      <div class="flow-box infra">JPA Adapter<br><small>(DB / Infra)</small></div>
     </div>
 
     <h3>Passo a passo de implementação</h3>
@@ -984,89 +993,116 @@
 
     <h3>Código: Port de Saída (interface)</h3>
 
-    <pre><code><span class="cm">// domain/ports/out/OrderRepositoryPort.ts</span>
-<span class="cm">// Uma interface pura — sem import de ORM, SQL ou qualquer framework</span>
+    <pre><code><span class="cm">// domain/port/out/OrderRepositoryPort.java</span>
+<span class="cm">// Interface pura — sem import de JPA, Spring ou qualquer framework</span>
 
-<span class="kw">export interface</span> <span class="ty">OrderRepositoryPort</span> {
-  <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
-  <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt;;
-  <span class="fn">findByCustomerId</span>(customerId: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span>[]&gt;;
+<span class="kw">package</span> com.empresa.pedidos.domain.port.out;
+
+<span class="kw">public interface</span> <span class="ty">OrderRepositoryPort</span> {
+    <span class="kw">void</span> <span class="fn">save</span>(<span class="ty">Order</span> order);
+    <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id);
+    <span class="ty">List</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findByCustomerId</span>(<span class="ty">String</span> customerId);
 }</code><span class="code-label">port / out</span></pre>
 
     <h3>Código: Use Case do domínio</h3>
 
-    <pre><code><span class="cm">// domain/use-cases/CreateOrderUseCase.ts</span>
-<span class="cm">// O coração: recebe ports por injeção, sem depender de implementações</span>
+    <pre><code><span class="cm">// domain/service/CreateOrderService.java</span>
+<span class="cm">// @Component fica aqui — mas sem import de JPA, HTTP ou qualquer infra</span>
 
-<span class="kw">export class</span> <span class="ty">CreateOrderUseCase</span> <span class="kw">implements</span> <span class="ty">CreateOrderPort</span> {
-  <span class="kw">constructor</span>(
-    <span class="kw">private readonly</span> orderRepo:    <span class="ty">OrderRepositoryPort</span>,
-    <span class="kw">private readonly</span> notification: <span class="ty">NotificationPort</span>,
-  ) {}
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">CreateOrderService</span> <span class="kw">implements</span> <span class="ty">CreateOrderUseCase</span> {
 
-  <span class="kw">async</span> <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span>&gt; {
-    <span class="cm">// 1. Validação e criação da entidade (regra de negócio pura)</span>
-    <span class="kw">const</span> order = <span class="ty">Order</span>.<span class="fn">create</span>({
-      customerId: input.customerId,
-      items:      input.items,
-    });
+    <span class="kw">private final</span> <span class="ty">OrderRepositoryPort</span>    orderRepository;
+    <span class="kw">private final</span> <span class="ty">CustomerRepositoryPort</span> customerRepository;
+    <span class="kw">private final</span> <span class="ty">NotificationPort</span>       notification;
 
-    <span class="cm">// 2. Persistência via port (não sabe que é PostgreSQL)</span>
-    <span class="kw">await</span> <span class="kw">this</span>.orderRepo.<span class="fn">save</span>(order);
+    <span class="kw">public</span> <span class="fn">CreateOrderService</span>(
+        <span class="ty">OrderRepositoryPort</span>    orderRepository,
+        <span class="ty">CustomerRepositoryPort</span> customerRepository,
+        <span class="ty">NotificationPort</span>       notification
+    ) {
+        <span class="kw">this</span>.orderRepository    = orderRepository;
+        <span class="kw">this</span>.customerRepository = customerRepository;
+        <span class="kw">this</span>.notification       = notification;
+    }
 
-    <span class="cm">// 3. Notificação via port (não sabe que é SendGrid)</span>
-    <span class="kw">await</span> <span class="kw">this</span>.notification.<span class="fn">orderCreated</span>(order);
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">CreateOrderOutput</span> <span class="fn">execute</span>(<span class="ty">CreateOrderCommand</span> command) {
+        <span class="cm">// Busca o cliente (port, não sabe qual banco)</span>
+        <span class="ty">Customer</span> customer = customerRepository.<span class="fn">findById</span>(command.<span class="fn">customerId</span>())
+            .<span class="fn">orElseThrow</span>(() -> <span class="kw">new</span> <span class="ty">DomainException</span>(<span class="str">"Cliente não encontrado."</span>));
 
-    <span class="kw">return</span> order;
-  }
+        <span class="cm">// Cria e valida (regra de negócio pura)</span>
+        <span class="ty">Order</span> order = <span class="ty">Order</span>.<span class="fn">create</span>(command.<span class="fn">customerId</span>(), command.<span class="fn">items</span>());
+
+        <span class="cm">// Persiste via port (não sabe que é JPA)</span>
+        orderRepository.<span class="fn">save</span>(order);
+
+        <span class="cm">// Notifica via port (não sabe que é Mailjet)</span>
+        notification.<span class="fn">sendOrderConfirmation</span>(order, customer.<span class="fn">email</span>());
+
+        <span class="kw">return new</span> <span class="ty">CreateOrderOutput</span>(order.<span class="fn">getId</span>(), order.<span class="fn">getTotal</span>(), order.<span class="fn">getStatus</span>());
+    }
 }</code><span class="code-label">use case</span></pre>
 
     <h3>Código: Adapter de entrada (HTTP Controller)</h3>
 
-    <pre><code><span class="cm">// adapters/in/http/OrderController.ts</span>
-<span class="cm">// Traduz HTTP → chamada ao domínio. Sabe de Express, não do negócio.</span>
+    <pre><code><span class="cm">// adapter/in/web/OrderController.java</span>
+<span class="cm">// Traduz HTTP → domínio. Conhece Spring MVC, não as regras de negócio.</span>
 
-<span class="kw">export class</span> <span class="ty">OrderController</span> {
-  <span class="kw">constructor</span>(<span class="kw">private readonly</span> createOrder: <span class="ty">CreateOrderPort</span>) {}
+<span class="dt">@RestController</span>
+<span class="dt">@RequestMapping</span>(<span class="str">"/orders"</span>)
+<span class="kw">public class</span> <span class="ty">OrderController</span> {
 
-  <span class="fn">register</span>(router: <span class="ty">Router</span>): <span class="ty">void</span> {
-    router.<span class="fn">post</span>(<span class="str">'/orders'</span>, <span class="kw">async</span> (req, res) => {
-      <span class="kw">try</span> {
-        <span class="kw">const</span> order = <span class="kw">await</span> <span class="kw">this</span>.createOrder.<span class="fn">execute</span>({
-          customerId: req.body.customerId,
-          items:      req.body.items,
-        });
-        res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>({ id: order.id });
-      } <span class="kw">catch</span> (err) {
-        res.<span class="fn">status</span>(<span class="num">400</span>).<span class="fn">json</span>({ error: err.message });
-      }
-    });
-  }
+    <span class="kw">private final</span> <span class="ty">CreateOrderUseCase</span> createOrderUseCase;
+
+    <span class="kw">public</span> <span class="fn">OrderController</span>(<span class="ty">CreateOrderUseCase</span> createOrderUseCase) {
+        <span class="kw">this</span>.createOrderUseCase = createOrderUseCase;
+    }
+
+    <span class="dt">@PostMapping</span>
+    <span class="dt">@ResponseStatus</span>(<span class="ty">HttpStatus</span>.CREATED)
+    <span class="kw">public</span> <span class="ty">CreateOrderOutput</span> <span class="fn">createOrder</span>(<span class="dt">@RequestBody</span> <span class="dt">@Valid</span> <span class="ty">CreateOrderRequest</span> request) {
+        <span class="kw">return</span> createOrderUseCase.<span class="fn">execute</span>(
+            <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(request.<span class="fn">customerId</span>(), request.<span class="fn">items</span>())
+        );
+    }
+
+    <span class="dt">@ExceptionHandler</span>(<span class="ty">DomainException</span>.<span class="kw">class</span>)
+    <span class="dt">@ResponseStatus</span>(<span class="ty">HttpStatus</span>.UNPROCESSABLE_ENTITY)
+    <span class="kw">public</span> <span class="ty">ErrorResponse</span> <span class="fn">handleDomainException</span>(<span class="ty">DomainException</span> ex) {
+        <span class="kw">return new</span> <span class="ty">ErrorResponse</span>(ex.<span class="fn">getMessage</span>());
+    }
 }</code><span class="code-label">adapter / in</span></pre>
 
-    <h3>Código: Adapter de saída (PostgreSQL Repository)</h3>
+    <h3>Código: Adapter de saída (JPA Repository)</h3>
 
-    <pre><code><span class="cm">// adapters/out/persistence/PgOrderRepository.ts</span>
-<span class="cm">// Implementa o port. Aqui sim pode usar ORM, SQL, o que quiser.</span>
+    <pre><code><span class="cm">// adapter/out/persistence/JpaOrderRepository.java</span>
+<span class="cm">// Implementa o port. Aqui sim usamos JPA, Spring Data, o que precisar.</span>
 
-<span class="kw">export class</span> <span class="ty">PgOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
-  <span class="kw">constructor</span>(<span class="kw">private readonly</span> db: <span class="ty">Pool</span>) {}
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">JpaOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
 
-  <span class="kw">async</span> <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt; {
-    <span class="kw">await</span> <span class="kw">this</span>.db.<span class="fn">query</span>(
-      <span class="str">`INSERT INTO orders (id, customer_id, total, status)
-       VALUES ($1, $2, $3, $4)`</span>,
-      [order.id, order.customerId, order.total, order.status],
-    );
-  }
+    <span class="kw">private final</span> <span class="ty">SpringDataOrderRepository</span> springRepo;
 
-  <span class="kw">async</span> <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt; {
-    <span class="kw">const</span> { rows } = <span class="kw">await</span> <span class="kw">this</span>.db.<span class="fn">query</span>(
-      <span class="str">'SELECT * FROM orders WHERE id = $1'</span>, [id]
-    );
-    <span class="kw">return</span> rows[<span class="num">0</span>] ? <span class="ty">OrderMapper</span>.<span class="fn">toDomain</span>(rows[<span class="num">0</span>]) : <span class="kw">null</span>;
-  }
-}</code><span class="code-label">adapter / out</span></pre>
+    <span class="kw">public</span> <span class="fn">JpaOrderRepository</span>(<span class="ty">SpringDataOrderRepository</span> springRepo) {
+        <span class="kw">this</span>.springRepo = springRepo;
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">save</span>(<span class="ty">Order</span> order) {
+        springRepo.<span class="fn">save</span>(<span class="ty">OrderEntity</span>.<span class="fn">fromDomain</span>(order));
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id) {
+        <span class="kw">return</span> springRepo.<span class="fn">findById</span>(id)
+            .<span class="fn">map</span>(<span class="ty">OrderEntity</span>::<span class="fn">toDomain</span>);
+    }
+}
+
+<span class="cm">// Interface Spring Data — detalhe de infraestrutura, fica fora do domain/</span>
+<span class="kw">interface</span> <span class="ty">SpringDataOrderRepository</span> <span class="kw">extends</span> <span class="ty">JpaRepository</span>&lt;<span class="ty">OrderEntity</span>, <span class="ty">String</span>&gt; {}</code><span class="code-label">adapter / out</span></pre>
 
     <div class="callout callout-adapter">
       <div class="callout-title">🔑 A regra de ouro</div>
@@ -1085,108 +1121,121 @@
     <h2>Sistema de pedidos em Node.js</h2>
 
     <p>
-      Vamos construir um sistema de <strong>criação de pedidos</strong> completo com Arquitetura Hexagonal em Node.js + TypeScript. O sistema aceita pedidos via HTTP, persiste no banco e envia um e-mail de confirmação.
+      Vamos construir um sistema de <strong>criação de pedidos</strong> completo com Arquitetura Hexagonal em <strong>Java 21 + Spring Boot 3</strong>. O sistema aceita pedidos via HTTP, persiste com JPA e envia um e-mail de confirmação.
     </p>
 
     <div class="callout callout-accent">
       <div class="callout-title">📦 Contexto do sistema</div>
-      <p>Uma loja online precisa de um endpoint <code>POST /orders</code> que: valide o pedido, calcule o total, salve no PostgreSQL e notifique o cliente por e-mail. Deve ser testável sem banco e facilmente migrável para outro banco no futuro.</p>
+      <p>Uma loja online precisa de um endpoint <code>POST /orders</code> que: valide o pedido, calcule o total, salve via JPA (PostgreSQL) e notifique o cliente por e-mail. Deve ser testável sem banco — apenas com JUnit 5 + Mockito — e facilmente migrável para outro banco no futuro.</p>
     </div>
 
     <h3>1. A Entidade de Domínio</h3>
 
-    <pre><code><span class="cm">// domain/entities/Order.ts</span>
+    <pre><code><span class="cm">// domain/entity/Order.java</span>
+<span class="cm">// Plain Java — nenhuma anotação JPA, nenhum import do Spring</span>
 
-<span class="kw">export class</span> <span class="ty">Order</span> {
-  <span class="kw">private constructor</span>(
-    <span class="kw">public readonly</span> id:         <span class="ty">string</span>,
-    <span class="kw">public readonly</span> customerId: <span class="ty">string</span>,
-    <span class="kw">public readonly</span> items:      <span class="ty">OrderItem</span>[],
-    <span class="kw">public readonly</span> total:      <span class="ty">number</span>,
-    <span class="kw">public</span>          status:     <span class="ty">OrderStatus</span>,
-    <span class="kw">public readonly</span> createdAt:  <span class="ty">Date</span>,
-  ) {}
+<span class="kw">public class</span> <span class="ty">Order</span> {
 
-  <span class="cm">// Factory method — encapsula as regras de criação</span>
-  <span class="kw">static</span> <span class="fn">create</span>(data: <span class="ty">CreateOrderData</span>): <span class="ty">Order</span> {
-    <span class="kw">if</span> (data.items.length === <span class="num">0</span>) {
-      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Um pedido precisa ter ao menos um item.'</span>);
+    <span class="kw">private final</span> <span class="ty">String</span>        id;
+    <span class="kw">private final</span> <span class="ty">String</span>        customerId;
+    <span class="kw">private final</span> <span class="ty">List</span>&lt;<span class="ty">OrderItem</span>&gt; items;
+    <span class="kw">private final</span> <span class="ty">BigDecimal</span>    total;
+    <span class="kw">private</span>       <span class="ty">OrderStatus</span>   status;
+    <span class="kw">private final</span> <span class="ty">LocalDateTime</span> createdAt;
+
+    <span class="kw">private</span> <span class="fn">Order</span>(<span class="ty">String</span> id, <span class="ty">String</span> customerId, <span class="ty">List</span>&lt;<span class="ty">OrderItem</span>&gt; items,
+                  <span class="ty">BigDecimal</span> total, <span class="ty">OrderStatus</span> status, <span class="ty">LocalDateTime</span> createdAt) {
+        <span class="kw">this</span>.id         = id;
+        <span class="kw">this</span>.customerId = customerId;
+        <span class="kw">this</span>.items      = <span class="ty">Collections</span>.<span class="fn">unmodifiableList</span>(items);
+        <span class="kw">this</span>.total      = total;
+        <span class="kw">this</span>.status     = status;
+        <span class="kw">this</span>.createdAt  = createdAt;
     }
 
-    <span class="kw">const</span> total = data.items.<span class="fn">reduce</span>(
-      (sum, item) => sum + item.price * item.quantity, <span class="num">0</span>
-    );
+    <span class="cm">// Factory method — encapsula as regras de criação</span>
+    <span class="kw">public static</span> <span class="ty">Order</span> <span class="fn">create</span>(<span class="ty">String</span> customerId, <span class="ty">List</span>&lt;<span class="ty">OrderItem</span>&gt; items) {
+        <span class="kw">if</span> (items == <span class="kw">null</span> || items.<span class="fn">isEmpty</span>()) {
+            <span class="kw">throw new</span> <span class="ty">DomainException</span>(<span class="str">"Um pedido precisa ter ao menos um item."</span>);
+        }
+        <span class="ty">BigDecimal</span> total = items.<span class="fn">stream</span>()
+            .<span class="fn">map</span>(i -> i.<span class="fn">price</span>().<span class="fn">multiply</span>(<span class="ty">BigDecimal</span>.<span class="fn">valueOf</span>(i.<span class="fn">quantity</span>())))
+            .<span class="fn">reduce</span>(<span class="ty">BigDecimal</span>.ZERO, <span class="ty">BigDecimal</span>::<span class="fn">add</span>);
 
-    <span class="kw">if</span> (total <= <span class="num">0</span>) {
-      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Total do pedido deve ser positivo.'</span>);
+        <span class="kw">if</span> (total.<span class="fn">compareTo</span>(<span class="ty">BigDecimal</span>.ZERO) <= <span class="num">0</span>) {
+            <span class="kw">throw new</span> <span class="ty">DomainException</span>(<span class="str">"Total do pedido deve ser positivo."</span>);
+        }
+        <span class="kw">return new</span> <span class="ty">Order</span>(<span class="ty">UUID</span>.<span class="fn">randomUUID</span>().<span class="fn">toString</span>(), customerId,
+                         items, total, <span class="ty">OrderStatus</span>.PENDING, <span class="ty">LocalDateTime</span>.<span class="fn">now</span>());
     }
 
-    <span class="kw">return new</span> <span class="ty">Order</span>(
-      <span class="fn">generateId</span>(),
-      data.customerId,
-      data.items,
-      total,
-      <span class="str">'PENDING'</span>,
-      <span class="kw">new</span> <span class="ty">Date</span>(),
-    );
-  }
-
-  <span class="fn">confirm</span>(): <span class="ty">void</span> {
-    <span class="kw">if</span> (<span class="kw">this</span>.status !== <span class="str">'PENDING'</span>) {
-      <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Apenas pedidos pendentes podem ser confirmados.'</span>);
+    <span class="kw">public void</span> <span class="fn">confirm</span>() {
+        <span class="kw">if</span> (<span class="kw">this</span>.status != <span class="ty">OrderStatus</span>.PENDING) {
+            <span class="kw">throw new</span> <span class="ty">DomainException</span>(<span class="str">"Apenas pedidos pendentes podem ser confirmados."</span>);
+        }
+        <span class="kw">this</span>.status = <span class="ty">OrderStatus</span>.CONFIRMED;
     }
-    <span class="kw">this</span>.status = <span class="str">'CONFIRMED'</span>;
-  }
+
+    <span class="cm">// getters...</span>
 }</code><span class="code-label">entity</span></pre>
 
     <h3>2. As Interfaces (Ports)</h3>
 
-    <pre><code><span class="cm">// domain/ports/out/OrderRepositoryPort.ts</span>
-<span class="kw">export interface</span> <span class="ty">OrderRepositoryPort</span> {
-  <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
-  <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt;;
+    <pre><code><span class="cm">// domain/port/out/OrderRepositoryPort.java</span>
+<span class="kw">public interface</span> <span class="ty">OrderRepositoryPort</span> {
+    <span class="kw">void</span>              <span class="fn">save</span>(<span class="ty">Order</span> order);
+    <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt;  <span class="fn">findById</span>(<span class="ty">String</span> id);
 }
 
-<span class="cm">// domain/ports/out/NotificationPort.ts</span>
-<span class="kw">export interface</span> <span class="ty">NotificationPort</span> {
-  <span class="fn">sendOrderConfirmation</span>(order: <span class="ty">Order</span>, email: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt;;
+<span class="cm">// domain/port/out/NotificationPort.java</span>
+<span class="kw">public interface</span> <span class="ty">NotificationPort</span> {
+    <span class="kw">void</span> <span class="fn">sendOrderConfirmation</span>(<span class="ty">Order</span> order, <span class="ty">String</span> email);
 }
 
-<span class="cm">// domain/ports/in/CreateOrderPort.ts</span>
-<span class="kw">export interface</span> <span class="ty">CreateOrderPort</span> {
-  <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">CreateOrderOutput</span>&gt;;
+<span class="cm">// domain/port/in/CreateOrderUseCase.java</span>
+<span class="cm">// Port de entrada — implementado pelo CreateOrderService</span>
+<span class="kw">public interface</span> <span class="ty">CreateOrderUseCase</span> {
+    <span class="ty">CreateOrderOutput</span> <span class="fn">execute</span>(<span class="ty">CreateOrderCommand</span> command);
 }</code><span class="code-label">ports</span></pre>
 
-    <h3>3. O Use Case</h3>
+    <h3>3. O Use Case (Domain Service)</h3>
 
-    <pre><code><span class="cm">// domain/use-cases/CreateOrderUseCase.ts</span>
+    <pre><code><span class="cm">// domain/service/CreateOrderService.java</span>
 
-<span class="kw">export class</span> <span class="ty">CreateOrderUseCase</span> <span class="kw">implements</span> <span class="ty">CreateOrderPort</span> {
-  <span class="kw">constructor</span>(
-    <span class="kw">private readonly</span> orderRepo:    <span class="ty">OrderRepositoryPort</span>,
-    <span class="kw">private readonly</span> notification: <span class="ty">NotificationPort</span>,
-    <span class="kw">private readonly</span> customerRepo: <span class="ty">CustomerRepositoryPort</span>,
-  ) {}
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">CreateOrderService</span> <span class="kw">implements</span> <span class="ty">CreateOrderUseCase</span> {
 
-  <span class="kw">async</span> <span class="fn">execute</span>(input: <span class="ty">CreateOrderInput</span>): <span class="ty">Promise</span>&lt;<span class="ty">CreateOrderOutput</span>&gt; {
-    <span class="cm">// Busca o cliente (port, não sabe qual banco)</span>
-    <span class="kw">const</span> customer = <span class="kw">await</span> <span class="kw">this</span>.customerRepo.<span class="fn">findById</span>(input.customerId);
-    <span class="kw">if</span> (!customer) <span class="kw">throw new</span> <span class="ty">DomainError</span>(<span class="str">'Cliente não encontrado.'</span>);
+    <span class="kw">private final</span> <span class="ty">OrderRepositoryPort</span>    orderRepository;
+    <span class="kw">private final</span> <span class="ty">CustomerRepositoryPort</span> customerRepository;
+    <span class="kw">private final</span> <span class="ty">NotificationPort</span>       notification;
 
-    <span class="cm">// Cria e valida o pedido (regra de negócio pura)</span>
-    <span class="kw">const</span> order = <span class="ty">Order</span>.<span class="fn">create</span>({
-      customerId: customer.id,
-      items:      input.items,
-    });
+    <span class="kw">public</span> <span class="fn">CreateOrderService</span>(
+        <span class="ty">OrderRepositoryPort</span>    orderRepository,
+        <span class="ty">CustomerRepositoryPort</span> customerRepository,
+        <span class="ty">NotificationPort</span>       notification
+    ) {
+        <span class="kw">this</span>.orderRepository    = orderRepository;
+        <span class="kw">this</span>.customerRepository = customerRepository;
+        <span class="kw">this</span>.notification       = notification;
+    }
 
-    <span class="cm">// Persiste (port)</span>
-    <span class="kw">await</span> <span class="kw">this</span>.orderRepo.<span class="fn">save</span>(order);
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">CreateOrderOutput</span> <span class="fn">execute</span>(<span class="ty">CreateOrderCommand</span> command) {
+        <span class="cm">// Busca cliente (port OUT, não sabe qual banco)</span>
+        <span class="ty">Customer</span> customer = customerRepository.<span class="fn">findById</span>(command.<span class="fn">customerId</span>())
+            .<span class="fn">orElseThrow</span>(() -> <span class="kw">new</span> <span class="ty">DomainException</span>(<span class="str">"Cliente não encontrado."</span>));
 
-    <span class="cm">// Notifica (port)</span>
-    <span class="kw">await</span> <span class="kw">this</span>.notification.<span class="fn">sendOrderConfirmation</span>(order, customer.email);
+        <span class="cm">// Cria entidade com validação (regra de negócio pura)</span>
+        <span class="ty">Order</span> order = <span class="ty">Order</span>.<span class="fn">create</span>(command.<span class="fn">customerId</span>(), command.<span class="fn">items</span>());
 
-    <span class="kw">return</span> { orderId: order.id, total: order.total, status: order.status };
-  }
+        <span class="cm">// Persiste via port OUT</span>
+        orderRepository.<span class="fn">save</span>(order);
+
+        <span class="cm">// Notifica via port OUT</span>
+        notification.<span class="fn">sendOrderConfirmation</span>(order, customer.<span class="fn">email</span>());
+
+        <span class="kw">return new</span> <span class="ty">CreateOrderOutput</span>(order.<span class="fn">getId</span>(), order.<span class="fn">getTotal</span>(), order.<span class="fn">getStatus</span>());
+    }
 }</code><span class="code-label">use case</span></pre>
 
     <h3>4. Adapter de Saída — PostgreSQL</h3>
@@ -1196,130 +1245,152 @@
 <span class="kw">export class</span> <span class="ty">PgOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
   <span class="kw">constructor</span>(<span class="kw">private readonly</span> pool: <span class="ty">Pool</span>) {}
 
-  <span class="kw">async</span> <span class="fn">save</span>(order: <span class="ty">Order</span>): <span class="ty">Promise</span>&lt;<span class="ty">void</span>&gt; {
-    <span class="kw">await</span> <span class="kw">this</span>.pool.<span class="fn">query</span>(
-      <span class="str">`INSERT INTO orders (id, customer_id, items, total, status, created_at)
-       VALUES ($1, $2, $3, $4, $5, $6)`</span>,
-      [
-        order.id,
-        order.customerId,
-        <span class="ty">JSON</span>.<span class="fn">stringify</span>(order.items),
-        order.total,
-        order.status,
-        order.createdAt,
-      ]
-    );
-  }
+    <h3>4. Adapter de Saída — JPA Repository</h3>
 
-  <span class="kw">async</span> <span class="fn">findById</span>(id: <span class="ty">string</span>): <span class="ty">Promise</span>&lt;<span class="ty">Order</span> | <span class="ty">null</span>&gt; {
-    <span class="kw">const</span> { rows } = <span class="kw">await</span> <span class="kw">this</span>.pool.<span class="fn">query</span>(
-      <span class="str">'SELECT * FROM orders WHERE id = $1'</span>, [id]
-    );
-    <span class="kw">return</span> rows[<span class="num">0</span>] ? <span class="ty">OrderMapper</span>.<span class="fn">toDomain</span>(rows[<span class="num">0</span>]) : <span class="kw">null</span>;
-  }
-}</code><span class="code-label">adapter / out</span></pre>
+    <pre><code><span class="cm">// adapter/out/persistence/JpaOrderRepository.java</span>
+<span class="cm">// Implementa o port. Aqui sim usamos @Entity, JPA, Spring Data.</span>
 
-    <h3>5. Adapter de Entrada — HTTP Controller</h3>
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">JpaOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
 
-    <pre><code><span class="cm">// adapters/in/http/OrderController.ts</span>
+    <span class="kw">private final</span> <span class="ty">SpringDataOrderRepository</span> springRepo;
 
-<span class="kw">export class</span> <span class="ty">OrderController</span> {
-  <span class="kw">constructor</span>(<span class="kw">private readonly</span> createOrder: <span class="ty">CreateOrderPort</span>) {}
+    <span class="kw">public</span> <span class="fn">JpaOrderRepository</span>(<span class="ty">SpringDataOrderRepository</span> springRepo) {
+        <span class="kw">this</span>.springRepo = springRepo;
+    }
 
-  <span class="fn">register</span>(router: <span class="ty">Router</span>): <span class="ty">void</span> {
-    router.<span class="fn">post</span>(<span class="str">'/orders'</span>, <span class="kw">async</span> (req: <span class="ty">Request</span>, res: <span class="ty">Response</span>) => {
-      <span class="kw">try</span> {
-        <span class="kw">const</span> result = <span class="kw">await</span> <span class="kw">this</span>.createOrder.<span class="fn">execute</span>({
-          customerId: req.body.customerId,
-          items:      req.body.items,
-        });
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">save</span>(<span class="ty">Order</span> order) {
+        springRepo.<span class="fn">save</span>(<span class="ty">OrderEntity</span>.<span class="fn">fromDomain</span>(order));
+    }
 
-        res.<span class="fn">status</span>(<span class="num">201</span>).<span class="fn">json</span>(result);
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id) {
+        <span class="kw">return</span> springRepo.<span class="fn">findById</span>(id)
+            .<span class="fn">map</span>(<span class="ty">OrderEntity</span>::<span class="fn">toDomain</span>);
+    }
+}
 
-      } <span class="kw">catch</span> (err) {
-        <span class="kw">if</span> (err <span class="kw">instanceof</span> <span class="ty">DomainError</span>) {
-          <span class="kw">return</span> res.<span class="fn">status</span>(<span class="num">422</span>).<span class="fn">json</span>({ error: err.message });
-        }
-        res.<span class="fn">status</span>(<span class="num">500</span>).<span class="fn">json</span>({ error: <span class="str">'Erro interno'</span> });
-      }
-    });
-  }
+<span class="cm">// Detalhe de infra — fica fora do domain/</span>
+<span class="kw">interface</span> <span class="ty">SpringDataOrderRepository</span>
+    <span class="kw">extends</span> <span class="ty">JpaRepository</span>&lt;<span class="ty">OrderEntity</span>, <span class="ty">String</span>&gt; {}</code><span class="code-label">adapter / out</span></pre>
+
+    <h3>5. Adapter de Entrada — Spring @RestController</h3>
+
+    <pre><code><span class="cm">// adapter/in/web/OrderController.java</span>
+<span class="cm">// Conhece Spring MVC. Não conhece regras de negócio.</span>
+
+<span class="dt">@RestController</span>
+<span class="dt">@RequestMapping</span>(<span class="str">"/orders"</span>)
+<span class="kw">public class</span> <span class="ty">OrderController</span> {
+
+    <span class="kw">private final</span> <span class="ty">CreateOrderUseCase</span> createOrderUseCase;
+
+    <span class="kw">public</span> <span class="fn">OrderController</span>(<span class="ty">CreateOrderUseCase</span> createOrderUseCase) {
+        <span class="kw">this</span>.createOrderUseCase = createOrderUseCase;
+    }
+
+    <span class="dt">@PostMapping</span>
+    <span class="dt">@ResponseStatus</span>(<span class="ty">HttpStatus</span>.CREATED)
+    <span class="kw">public</span> <span class="ty">CreateOrderOutput</span> <span class="fn">createOrder</span>(
+        <span class="dt">@RequestBody</span> <span class="dt">@Valid</span> <span class="ty">CreateOrderRequest</span> request
+    ) {
+        <span class="kw">return</span> createOrderUseCase.<span class="fn">execute</span>(
+            <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(request.<span class="fn">customerId</span>(), request.<span class="fn">items</span>())
+        );
+    }
+
+    <span class="dt">@ExceptionHandler</span>(<span class="ty">DomainException</span>.<span class="kw">class</span>)
+    <span class="dt">@ResponseStatus</span>(<span class="ty">HttpStatus</span>.UNPROCESSABLE_ENTITY)
+    <span class="kw">public</span> <span class="ty">ErrorResponse</span> <span class="fn">handleDomainException</span>(<span class="ty">DomainException</span> ex) {
+        <span class="kw">return new</span> <span class="ty">ErrorResponse</span>(ex.<span class="fn">getMessage</span>());
+    }
 }</code><span class="code-label">adapter / in</span></pre>
 
-    <h3>6. Montagem do Container de DI</h3>
+    <h3>6. Configuração do Container Spring (DI)</h3>
 
-    <pre><code><span class="cm">// infrastructure/container.ts</span>
-<span class="cm">// Este é o único lugar onde tudo se conecta</span>
+    <pre><code><span class="cm">// infrastructure/config/BeanConfiguration.java</span>
+<span class="cm">// Conecta tudo via @Bean — único lugar com conhecimento de ambos os lados</span>
 
-<span class="kw">const</span> pool = <span class="kw">new</span> <span class="ty">Pool</span>({ connectionString: process.env.DATABASE_URL });
+<span class="dt">@Configuration</span>
+<span class="kw">public class</span> <span class="ty">BeanConfiguration</span> {
 
-<span class="cm">// Adapters (implementações concretas)</span>
-<span class="kw">const</span> orderRepo     = <span class="kw">new</span> <span class="ty">PgOrderRepository</span>(pool);
-<span class="kw">const</span> customerRepo  = <span class="kw">new</span> <span class="ty">PgCustomerRepository</span>(pool);
-<span class="kw">const</span> notification  = <span class="kw">new</span> <span class="ty">SendGridNotificationAdapter</span>(process.env.SENDGRID_KEY);
+    <span class="cm">// O Spring injeta automaticamente os adapters anotados com @Component</span>
+    <span class="dt">@Bean</span>
+    <span class="kw">public</span> <span class="ty">CreateOrderUseCase</span> <span class="fn">createOrderUseCase</span>(
+        <span class="ty">OrderRepositoryPort</span>    orderRepository,
+        <span class="ty">CustomerRepositoryPort</span> customerRepository,
+        <span class="ty">NotificationPort</span>       notification
+    ) {
+        <span class="kw">return new</span> <span class="ty">CreateOrderService</span>(orderRepository, customerRepository, notification);
+    }
+}
 
-<span class="cm">// Use Cases (domínio recebe os ports)</span>
-<span class="kw">const</span> createOrderUseCase = <span class="kw">new</span> <span class="ty">CreateOrderUseCase</span>(
-  orderRepo,
-  notification,
-  customerRepo,
-);
+<span class="cm">/*
+ * Por que @Bean e não @Service direto no CreateOrderService?
+ * Manter o domain/service/ sem anotações Spring = domínio portável.
+ * Essa é a escolha estrita da arquitetura hexagonal.
+ *
+ * Alternativa: usar @Component no CreateOrderService (mais pragmático,
+ * aceito pela maioria dos times Spring).
+ */</span></code><span class="code-label">Spring DI config</span></pre>
 
-<span class="cm">// Controllers (driving adapters recebem o use case)</span>
-<span class="kw">const</span> orderController = <span class="kw">new</span> <span class="ty">OrderController</span>(createOrderUseCase);
+    <h3>7. Teste unitário — sem banco, sem Spring</h3>
 
-<span class="kw">export</span> { orderController };</code><span class="code-label">DI container</span></pre>
+    <pre><code><span class="cm">// test/domain/service/CreateOrderServiceTest.java</span>
+<span class="cm">// JUnit 5 + Mockito — zero infraestrutura, roda em milissegundos</span>
 
-    <h3>7. Teste unitário — sem banco, sem HTTP</h3>
+<span class="dt">@ExtendWith</span>(<span class="ty">MockitoExtension</span>.<span class="kw">class</span>)
+<span class="kw">class</span> <span class="ty">CreateOrderServiceTest</span> {
 
-    <pre><code><span class="cm">// tests/unit/CreateOrderUseCase.test.ts</span>
-<span class="cm">// Testamos o domínio com mocks simples — rápido e confiável</span>
+    <span class="dt">@Mock</span> <span class="kw">private</span> <span class="ty">OrderRepositoryPort</span>    orderRepository;
+    <span class="dt">@Mock</span> <span class="kw">private</span> <span class="ty">CustomerRepositoryPort</span> customerRepository;
+    <span class="dt">@Mock</span> <span class="kw">private</span> <span class="ty">NotificationPort</span>       notification;
 
-<span class="fn">describe</span>(<span class="str">'CreateOrderUseCase'</span>, () => {
-  <span class="kw">let</span> useCase:       <span class="ty">CreateOrderUseCase</span>;
-  <span class="kw">let</span> orderRepo:     <span class="fn">jest.Mocked</span>&lt;<span class="ty">OrderRepositoryPort</span>&gt;;
-  <span class="kw">let</span> notification:  <span class="fn">jest.Mocked</span>&lt;<span class="ty">NotificationPort</span>&gt;;
-  <span class="kw">let</span> customerRepo:  <span class="fn">jest.Mocked</span>&lt;<span class="ty">CustomerRepositoryPort</span>&gt;;
+    <span class="dt">@InjectMocks</span>
+    <span class="kw">private</span> <span class="ty">CreateOrderService</span> service;
 
-  <span class="fn">beforeEach</span>(() => {
-    orderRepo    = { save: <span class="fn">jest.fn</span>(), findById: <span class="fn">jest.fn</span>() };
-    notification = { sendOrderConfirmation: <span class="fn">jest.fn</span>() };
-    customerRepo = { findById: <span class="fn">jest.fn</span>() };
+    <span class="dt">@BeforeEach</span>
+    <span class="kw">void</span> <span class="fn">setUp</span>() {
+        <span class="fn">when</span>(customerRepository.<span class="fn">findById</span>(<span class="str">"customer-1"</span>))
+            .<span class="fn">thenReturn</span>(<span class="ty">Optional</span>.<span class="fn">of</span>(
+                <span class="kw">new</span> <span class="ty">Customer</span>(<span class="str">"customer-1"</span>, <span class="str">"João"</span>, <span class="str">"joao@email.com"</span>)
+            ));
+    }
 
-    <span class="cm">// Mock do cliente</span>
-    customerRepo.findById.<span class="fn">mockResolvedValue</span>({
-      id: <span class="str">'customer-1'</span>,
-      email: <span class="str">'joao@email.com'</span>,
-      name: <span class="str">'João'</span>,
-    });
+    <span class="dt">@Test</span>
+    <span class="kw">void</span> <span class="fn">deveCriarPedidoENotificarCliente</span>() {
+        <span class="kw">var</span> command = <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(
+            <span class="str">"customer-1"</span>,
+            <span class="ty">List</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="ty">OrderItem</span>(<span class="str">"p1"</span>, <span class="kw">new</span> <span class="ty">BigDecimal</span>(<span class="str">"50"</span>), <span class="num">2</span>))
+        );
 
-    useCase = <span class="kw">new</span> <span class="ty">CreateOrderUseCase</span>(orderRepo, notification, customerRepo);
-  });
+        <span class="ty">CreateOrderOutput</span> result = service.<span class="fn">execute</span>(command);
 
-  <span class="fn">it</span>(<span class="str">'deve criar pedido e notificar o cliente'</span>, <span class="kw">async</span> () => {
-    <span class="kw">const</span> result = <span class="kw">await</span> useCase.<span class="fn">execute</span>({
-      customerId: <span class="str">'customer-1'</span>,
-      items: [{ productId: <span class="str">'p1'</span>, price: <span class="num">50</span>, quantity: <span class="num">2</span> }],
-    });
+        <span class="fn">assertThat</span>(result.<span class="fn">total</span>())
+            .<span class="fn">isEqualByComparingTo</span>(<span class="kw">new</span> <span class="ty">BigDecimal</span>(<span class="str">"100"</span>));
+        <span class="fn">assertThat</span>(result.<span class="fn">status</span>())
+            .<span class="fn">isEqualTo</span>(<span class="ty">OrderStatus</span>.PENDING);
+        <span class="fn">verify</span>(orderRepository, <span class="fn">times</span>(<span class="num">1</span>)).<span class="fn">save</span>(<span class="fn">any</span>(<span class="ty">Order</span>.<span class="kw">class</span>));
+        <span class="fn">verify</span>(notification, <span class="fn">times</span>(<span class="num">1</span>))
+            .<span class="fn">sendOrderConfirmation</span>(<span class="fn">any</span>(), <span class="fn">anyString</span>());
+    }
 
-    <span class="fn">expect</span>(result.total).<span class="fn">toBe</span>(<span class="num">100</span>);
-    <span class="fn">expect</span>(result.status).<span class="fn">toBe</span>(<span class="str">'PENDING'</span>);
-    <span class="fn">expect</span>(orderRepo.save).<span class="fn">toHaveBeenCalledTimes</span>(<span class="num">1</span>);
-    <span class="fn">expect</span>(notification.sendOrderConfirmation).<span class="fn">toHaveBeenCalledTimes</span>(<span class="num">1</span>);
-  });
+    <span class="dt">@Test</span>
+    <span class="kw">void</span> <span class="fn">deveRejeitarPedidoSemItens</span>() {
+        <span class="kw">var</span> command = <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(<span class="str">"customer-1"</span>, <span class="ty">List</span>.<span class="fn">of</span>());
 
-  <span class="fn">it</span>(<span class="str">'deve rejeitar pedido sem itens'</span>, <span class="kw">async</span> () => {
-    <span class="kw">await</span> <span class="fn">expect</span>(
-      useCase.<span class="fn">execute</span>({ customerId: <span class="str">'customer-1'</span>, items: [] })
-    ).<span class="fn">rejects.toThrow</span>(<span class="str">'Um pedido precisa ter ao menos um item.'</span>);
+        <span class="fn">assertThatThrownBy</span>(() -> service.<span class="fn">execute</span>(command))
+            .<span class="fn">isInstanceOf</span>(<span class="ty">DomainException</span>.<span class="kw">class</span>)
+            .<span class="fn">hasMessage</span>(<span class="str">"Um pedido precisa ter ao menos um item."</span>);
 
-    <span class="fn">expect</span>(orderRepo.save).<span class="fn">not.toHaveBeenCalled</span>();
-  });
-});</code><span class="code-label">unit test</span></pre>
+        <span class="fn">verifyNoInteractions</span>(orderRepository);
+    }
+}</code><span class="code-label">unit test</span></pre>
 
     <div class="callout callout-domain">
       <div class="callout-title">✅ O que esse teste prova</div>
-      <p>Testamos <strong>100% da lógica de negócio</strong> sem banco de dados, sem servidor HTTP, sem variáveis de ambiente. O teste roda em milissegundos e não depende de nenhuma infraestrutura. Isso é o poder da Arquitetura Hexagonal.</p>
+      <p>Testamos <strong>100% da lógica de negócio</strong> sem banco de dados, sem Spring Context, sem application.properties. O Mockito substitui os adapters pelas interfaces — exatamente o que a Arquitetura Hexagonal foi projetada para permitir.</p>
     </div>
   </div>
 </section>
@@ -1399,14 +1470,14 @@
         <p>Alistair Cockburn, 2005 — "Hexagonal Architecture". O manifesto que iniciou tudo.</p>
       </div>
       <div class="card">
-        <div class="card-icon">📗</div>
-        <h4>Clean Architecture</h4>
-        <p>Robert C. Martin (Uncle Bob) — o livro que consolidou esses conceitos na mainstream.</p>
-      </div>
-      <div class="card">
         <div class="card-icon">📘</div>
         <h4>Get Your Hands Dirty on Clean Architecture</h4>
-        <p>Tom Hombergs — implementação prática em Java/Kotlin, altamente acessível.</p>
+        <p>Tom Hombergs — implementação prática em <strong>Java + Spring Boot</strong>, altamente acessível e direto ao ponto.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon">📗</div>
+        <h4>Clean Architecture</h4>
+        <p>Robert C. Martin (Uncle Bob) — o livro que consolidou esses conceitos na mainstream do desenvolvimento de software.</p>
       </div>
     </div>
   </div>
@@ -1416,7 +1487,7 @@
 <footer>
   <div class="container">
     <p>Material de estudos — Arquitetura Hexagonal &nbsp;·&nbsp; Ports &amp; Adapters</p>
-    <p style="margin-top:0.5rem">Série: BMAD &nbsp;→&nbsp; BFF &nbsp;→&nbsp; <strong style="color:var(--accent-glow)">Hexagonal</strong></p>
+    <p style="margin-top:0.5rem">Série: BMAD &nbsp;→&nbsp; BFF &nbsp;→&nbsp; <strong style="color:var(--accent-glow)">Hexagonal (Java + Spring Boot)</strong></p>
   </div>
 </footer>
 
