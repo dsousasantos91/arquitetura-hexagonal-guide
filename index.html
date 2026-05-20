@@ -523,6 +523,8 @@
     border-radius: 4px;
     padding: 1.5rem;
     margin: 1.5rem 0;
+    white-space: pre;
+    overflow-x: auto;
   }
 
   .tree .folder { color: var(--adapter); font-weight: 500; }
@@ -892,34 +894,32 @@
 
     <h3>Estrutura de pastas recomendada</h3>
 
-    <div class="tree">
-<span class="folder">src/</span>
-├── <span class="folder">domain/</span>                    <span class="cm">← núcleo, zero dependências externas</span>
+    <pre class="tree"><span class="folder">src/</span>
+├── <span class="folder">domain/</span>                       <span class="cm">← núcleo, zero dependências externas</span>
 │   ├── <span class="folder">entities/</span>
 │   │   └── <span class="domain-file">Order.ts</span>
 │   ├── <span class="folder">value-objects/</span>
 │   │   └── <span class="domain-file">Money.ts</span>
 │   ├── <span class="folder">ports/</span>
-│   │   ├── <span class="port-file">in/</span>             <span class="cm">← driving ports (interfaces de entrada)</span>
+│   │   ├── <span class="folder">in/</span>                    <span class="cm">← driving ports (interfaces de entrada)</span>
 │   │   │   └── <span class="port-file">CreateOrderPort.ts</span>
-│   │   └── <span class="port-file">out/</span>            <span class="cm">← driven ports (interfaces de saída)</span>
+│   │   └── <span class="folder">out/</span>                   <span class="cm">← driven ports (interfaces de saída)</span>
 │   │       ├── <span class="port-file">OrderRepositoryPort.ts</span>
 │   │       └── <span class="port-file">NotificationPort.ts</span>
 │   └── <span class="folder">use-cases/</span>
 │       └── <span class="domain-file">CreateOrderUseCase.ts</span>
 │
-├── <span class="folder">adapters/</span>                  <span class="cm">← implementações concretas</span>
-│   ├── <span class="folder">in/</span>                    <span class="cm">← driving adapters</span>
+├── <span class="folder">adapters/</span>                     <span class="cm">← implementações concretas</span>
+│   ├── <span class="folder">in/</span>                       <span class="cm">← driving adapters</span>
 │   │   ├── <span class="adapter-file">http/OrderController.ts</span>
 │   │   └── <span class="adapter-file">queue/OrderConsumer.ts</span>
-│   └── <span class="folder">out/</span>                   <span class="cm">← driven adapters</span>
+│   └── <span class="folder">out/</span>                      <span class="cm">← driven adapters</span>
 │       ├── <span class="adapter-file">persistence/PgOrderRepository.ts</span>
 │       └── <span class="adapter-file">notification/SendGridAdapter.ts</span>
 │
-└── <span class="folder">infrastructure/</span>            <span class="cm">← config, DI, bootstrap</span>
+└── <span class="folder">infrastructure/</span>               <span class="cm">← config, DI, bootstrap</span>
     ├── <span class="file">container.ts</span>
-    └── <span class="file">server.ts</span>
-    </div>
+    └── <span class="file">server.ts</span></pre>
 
     <h3>O fluxo de dados</h3>
 
