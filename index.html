@@ -1269,8 +1269,13 @@
     </p>
 
     <div class="callout callout-domain">
-      <div class="callout-title">🔁 A mágica da troca</div>
-      <p>O <code>BeanConfiguration</code> decide qual implementação injetar. Mudar de JPA para MongoDB, ou de Mailjet para SES, é apenas trocar qual classe o Spring resolve — o domínio permanece intocado.</p>
+      <div class="callout-title">🔁 Como a troca acontece na prática</div>
+      <p>
+        Quando há <strong>apenas uma classe</strong> implementando cada port e ela está anotada com <code>@Component</code>, o Spring resolve automaticamente.
+        Quando há <strong>múltiplas implementações</strong> do mesmo port (ex: <code>JpaOrderRepository</code> e <code>MongoOrderRepository</code> ambas no classpath),
+        você precisa ser explícito — seja via <code>@Primary</code>, <code>@Profile</code>, ou wiring manual no <code>@Configuration</code>.
+        Em todos os casos, <strong>o domínio e o use case não mudam uma linha</strong>.
+      </p>
     </div>
 
     <!-- OUT: JPA -->
@@ -1531,15 +1536,76 @@
       </p>
     </div>
 
-    <h3>6. Configuração do Container Spring (DI)</h3>
+    <h3>6. Configuração do Container Spring (DI) — como trocar implementações</h3>
 
+    <p>Existem três formas práticas de controlar qual adapter o Spring injeta. Escolha a que melhor se encaixa no seu contexto.</p>
+
+    <div class="code-group-label out">Estratégia 1 — Um único @Component (caso mais comum)</div>
+    <pre><code><span class="cm">// Se só existe UMA classe implementando o port no classpath,</span>
+<span class="cm">// o Spring resolve automaticamente — sem configuração extra.</span>
+
+<span class="dt">@Component</span>  <span class="cm">// ← Spring descobre e injeta esta implementação sozinho</span>
+<span class="kw">public class</span> <span class="ty">JpaOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> { ... }
+
+<span class="cm">// Para trocar para Mongo: remova @Component de JpaOrderRepository</span>
+<span class="cm">// e adicione @Component em MongoOrderRepository. Fim.</span>
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">MongoOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> { ... }</code><span class="code-label">auto-wiring</span></pre>
+
+    <div class="code-group-label out">Estratégia 2 — @Profile (ambientes diferentes)</div>
+    <pre><code><span class="cm">// Ideal quando você quer JPA em produção e Mongo em staging,</span>
+<span class="cm">// ou um adapter in-memory nos testes.</span>
+
+<span class="dt">@Component</span>
+<span class="dt">@Profile</span>(<span class="str">"prod"</span>)
+<span class="kw">public class</span> <span class="ty">JpaOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> { ... }
+
+<span class="dt">@Component</span>
+<span class="dt">@Profile</span>(<span class="str">"staging"</span>)
+<span class="kw">public class</span> <span class="ty">MongoOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> { ... }
+
+<span class="dt">@Component</span>
+<span class="dt">@Profile</span>(<span class="str">"test"</span>)
+<span class="kw">public class</span> <span class="ty">InMemoryOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
+    <span class="kw">private final</span> <span class="ty">Map</span>&lt;<span class="ty">String</span>, <span class="ty">Order</span>&gt; store = <span class="kw">new</span> <span class="ty">HashMap</span>&lt;&gt;();
+
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">save</span>(<span class="ty">Order</span> order) { store.<span class="fn">put</span>(order.<span class="fn">getId</span>(), order); }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id) {
+        <span class="kw">return</span> <span class="ty">Optional</span>.<span class="fn">ofNullable</span>(store.<span class="fn">get</span>(id));
+    }
+}
+
+<span class="cm">// Ativa via: spring.profiles.active=prod | staging | test</span></code><span class="code-label">@Profile</span></pre>
+
+    <div class="code-group-label out">Estratégia 3 — @Configuration com wiring explícito (máximo controle)</div>
     <pre><code><span class="cm">// infrastructure/config/BeanConfiguration.java</span>
-<span class="cm">// Conecta tudo via @Bean — único lugar com conhecimento de ambos os lados</span>
+<span class="cm">// Você nomeia explicitamente qual classe concreta resolve cada port.</span>
+<span class="cm">// Nenhum adapter precisa de @Component — o @Bean substitui.</span>
 
 <span class="dt">@Configuration</span>
 <span class="kw">public class</span> <span class="ty">BeanConfiguration</span> {
 
-    <span class="cm">// O Spring injeta automaticamente os adapters anotados com @Component</span>
+    <span class="cm">// ── Driven adapters (OUT) — você escolhe a implementação aqui ──────</span>
+
+    <span class="dt">@Bean</span>
+    <span class="kw">public</span> <span class="ty">OrderRepositoryPort</span> <span class="fn">orderRepository</span>(<span class="ty">SpringDataOrderRepository</span> springRepo) {
+        <span class="kw">return new</span> <span class="ty">JpaOrderRepository</span>(springRepo);
+        <span class="cm">// ↑ Trocar para Mongo: return new MongoOrderRepository(mongoTemplate);</span>
+    }
+
+    <span class="dt">@Bean</span>
+    <span class="kw">public</span> <span class="ty">NotificationPort</span> <span class="fn">notification</span>(<span class="ty">MailjetClient</span> mailjetClient) {
+        <span class="kw">return new</span> <span class="ty">MailjetNotificationAdapter</span>(mailjetClient);
+        <span class="cm">// ↑ Trocar para SES: return new SesNotificationAdapter(sesClient);</span>
+    }
+
+    <span class="cm">// ── Domain service — recebe os ports resolvidos acima ──────────────</span>
+    <span class="cm">// Note: o @Bean orderRepository() retorna OrderRepositoryPort (interface),</span>
+    <span class="cm">// não JpaOrderRepository. CreateOrderService só enxerga a interface.</span>
+
     <span class="dt">@Bean</span>
     <span class="kw">public</span> <span class="ty">CreateOrderUseCase</span> <span class="fn">createOrderUseCase</span>(
         <span class="ty">OrderRepositoryPort</span>    orderRepository,
@@ -1548,16 +1614,12 @@
     ) {
         <span class="kw">return new</span> <span class="ty">CreateOrderService</span>(orderRepository, customerRepository, notification);
     }
-}
+}</code><span class="code-label">explicit wiring</span></pre>
 
-<span class="cm">/*
- * Por que @Bean e não @Service direto no CreateOrderService?
- * Manter o domain/service/ sem anotações Spring = domínio portável.
- * Essa é a escolha estrita da arquitetura hexagonal.
- *
- * Alternativa: usar @Component no CreateOrderService (mais pragmático,
- * aceito pela maioria dos times Spring).
- */</span></code><span class="code-label">Spring DI config</span></pre>
+    <div class="callout callout-adapter">
+      <div class="callout-title">🔑 A regra de ouro</div>
+      <p>Se você está escrevendo código em <code>domain/</code> e sente vontade de importar algo de <code>adapter/</code> ou de um pacote de infraestrutura (JPA, Hibernate, Spring Data, RestTemplate), <strong>pare</strong>. Isso é um sinal de que você rompeu a arquitetura. Crie um port.</p>
+    </div>
 
     <h3>7. Teste unitário — sem banco, sem Spring</h3>
 
