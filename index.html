@@ -599,6 +599,28 @@
     font-weight: 500;
   }
 
+  /* ── CODE GROUP LABEL ── */
+  .code-group-label {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin: 2rem 0 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .code-group-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--hex-border);
+  }
+
+  .code-group-label.out { color: var(--domain); }
+  .code-group-label.in  { color: var(--adapter); }
+
   /* ── ANIMATIONS ── */
   @keyframes fadeUp {
     from { opacity: 0; transform: translateY(24px); }
@@ -985,8 +1007,8 @@
       <div class="step">
         <span class="step-num">06</span>
         <div class="step-content">
-          <h4>Monte o container de DI</h4>
-          <p>Na camada de infraestrutura, conecte tudo: injete os adapters nos use cases, registre rotas, configure o servidor.</p>
+          <h4>Configure o container Spring (DI)</h4>
+          <p>Na camada de infraestrutura, conecte tudo via <code>@Configuration</code> e <code>@Bean</code>: injete os adapters concretos nos use cases e exponha os beans para o Spring gerenciar.</p>
         </div>
       </div>
     </div>
@@ -1106,7 +1128,7 @@
 
     <div class="callout callout-adapter">
       <div class="callout-title">🔑 A regra de ouro</div>
-      <p>Se você está escrevendo código no <code>domain/</code> e sente vontade de importar algo de <code>adapters/</code> ou de um pacote de infraestrutura (Prisma, Axios, pg), <strong>pare</strong>. Isso é um sinal de que você rompeu a arquitetura. Crie um port.</p>
+      <p>Se você está escrevendo código em <code>domain/</code> e sente vontade de importar algo de <code>adapter/</code> ou de um pacote de infraestrutura (JPA, Hibernate, Spring Data, RestTemplate), <strong>pare</strong>. Isso é um sinal de que você rompeu a arquitetura. Crie um port.</p>
     </div>
   </div>
 </section>
@@ -1118,7 +1140,7 @@
   <div class="container">
     <div class="section-number">04 / 04</div>
     <span class="section-tag tag-exemplo">Exemplo real</span>
-    <h2>Sistema de pedidos em Node.js</h2>
+    <h2>Sistema de pedidos em Java + Spring Boot</h2>
 
     <p>
       Vamos construir um sistema de <strong>criação de pedidos</strong> completo com Arquitetura Hexagonal em <strong>Java 21 + Spring Boot 3</strong>. O sistema aceita pedidos via HTTP, persiste com JPA e envia um e-mail de confirmação.
@@ -1238,17 +1260,24 @@
     }
 }</code><span class="code-label">use case</span></pre>
 
-    <h3>4. Adapter de Saída — PostgreSQL</h3>
+    <!-- ═══ ADAPTERS DE SAÍDA (OUT) ═══ -->
+    <h3>4. Adapters de Saída (Driven) — o mesmo Port, implementações diferentes</h3>
 
-    <pre><code><span class="cm">// adapters/out/persistence/PgOrderRepository.ts</span>
+    <p>
+      O <code>OrderRepositoryPort</code> é a interface imutável do domínio. Qualquer classe que a implemente pode ser injetada —
+      basta trocar o bean no <code>@Configuration</code>. O domínio e o use case <strong>não mudam uma linha</strong>.
+    </p>
 
-<span class="kw">export class</span> <span class="ty">PgOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
-  <span class="kw">constructor</span>(<span class="kw">private readonly</span> pool: <span class="ty">Pool</span>) {}
+    <div class="callout callout-domain">
+      <div class="callout-title">🔁 A mágica da troca</div>
+      <p>O <code>BeanConfiguration</code> decide qual implementação injetar. Mudar de JPA para MongoDB, ou de Mailjet para SES, é apenas trocar qual classe o Spring resolve — o domínio permanece intocado.</p>
+    </div>
 
-    <h3>4. Adapter de Saída — JPA Repository</h3>
-
+    <!-- OUT: JPA -->
+    <div class="code-group-label out">
+      ● Opção A — Spring Data JPA (PostgreSQL)
+    </div>
     <pre><code><span class="cm">// adapter/out/persistence/JpaOrderRepository.java</span>
-<span class="cm">// Implementa o port. Aqui sim usamos @Entity, JPA, Spring Data.</span>
 
 <span class="dt">@Component</span>
 <span class="kw">public class</span> <span class="ty">JpaOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
@@ -1266,19 +1295,114 @@
 
     <span class="dt">@Override</span>
     <span class="kw">public</span> <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id) {
-        <span class="kw">return</span> springRepo.<span class="fn">findById</span>(id)
-            .<span class="fn">map</span>(<span class="ty">OrderEntity</span>::<span class="fn">toDomain</span>);
+        <span class="kw">return</span> springRepo.<span class="fn">findById</span>(id).<span class="fn">map</span>(<span class="ty">OrderEntity</span>::<span class="fn">toDomain</span>);
     }
 }
 
-<span class="cm">// Detalhe de infra — fica fora do domain/</span>
 <span class="kw">interface</span> <span class="ty">SpringDataOrderRepository</span>
-    <span class="kw">extends</span> <span class="ty">JpaRepository</span>&lt;<span class="ty">OrderEntity</span>, <span class="ty">String</span>&gt; {}</code><span class="code-label">adapter / out</span></pre>
+    <span class="kw">extends</span> <span class="ty">JpaRepository</span>&lt;<span class="ty">OrderEntity</span>, <span class="ty">String</span>&gt; {}</code><span class="code-label">adapter / out · JPA</span></pre>
 
-    <h3>5. Adapter de Entrada — Spring @RestController</h3>
+    <!-- OUT: MongoDB -->
+    <div class="code-group-label out">
+      ● Opção B — Spring Data MongoDB
+    </div>
+    <pre><code><span class="cm">// adapter/out/persistence/MongoOrderRepository.java</span>
+<span class="cm">// Mesma interface, tecnologia completamente diferente.</span>
+<span class="cm">// O domínio não sabe — e não precisa saber — desta classe.</span>
 
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">MongoOrderRepository</span> <span class="kw">implements</span> <span class="ty">OrderRepositoryPort</span> {
+
+    <span class="kw">private final</span> <span class="ty">MongoTemplate</span> mongoTemplate;
+
+    <span class="kw">public</span> <span class="fn">MongoOrderRepository</span>(<span class="ty">MongoTemplate</span> mongoTemplate) {
+        <span class="kw">this</span>.mongoTemplate = mongoTemplate;
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">save</span>(<span class="ty">Order</span> order) {
+        mongoTemplate.<span class="fn">save</span>(<span class="ty">OrderDocument</span>.<span class="fn">fromDomain</span>(order), <span class="str">"orders"</span>);
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public</span> <span class="ty">Optional</span>&lt;<span class="ty">Order</span>&gt; <span class="fn">findById</span>(<span class="ty">String</span> id) {
+        <span class="ty">OrderDocument</span> doc = mongoTemplate.<span class="fn">findById</span>(id, <span class="ty">OrderDocument</span>.<span class="kw">class</span>, <span class="str">"orders"</span>);
+        <span class="kw">return</span> <span class="ty">Optional</span>.<span class="fn">ofNullable</span>(doc).<span class="fn">map</span>(<span class="ty">OrderDocument</span>::<span class="fn">toDomain</span>);
+    }
+}</code><span class="code-label">adapter / out · MongoDB</span></pre>
+
+    <!-- OUT: Notification Mailjet -->
+    <div class="code-group-label out">
+      ● Opção C — NotificationPort via Mailjet
+    </div>
+    <pre><code><span class="cm">// adapter/out/notification/MailjetNotificationAdapter.java</span>
+
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">MailjetNotificationAdapter</span> <span class="kw">implements</span> <span class="ty">NotificationPort</span> {
+
+    <span class="kw">private final</span> <span class="ty">MailjetClient</span> client;
+
+    <span class="kw">public</span> <span class="fn">MailjetNotificationAdapter</span>(<span class="ty">MailjetClient</span> client) {
+        <span class="kw">this</span>.client = client;
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">sendOrderConfirmation</span>(<span class="ty">Order</span> order, <span class="ty">String</span> email) {
+        <span class="ty">MailjetRequest</span> request = <span class="kw">new</span> <span class="ty">MailjetRequest</span>(<span class="ty">Emailv31</span>.resource)
+            .<span class="fn">property</span>(<span class="ty">Emailv31</span>.MESSAGES, <span class="kw">new</span> <span class="ty">JSONArray</span>().<span class="fn">put</span>(
+                <span class="kw">new</span> <span class="ty">JSONObject</span>()
+                    .<span class="fn">put</span>(<span class="str">"To"</span>, <span class="kw">new</span> <span class="ty">JSONArray</span>().<span class="fn">put</span>(<span class="kw">new</span> <span class="ty">JSONObject</span>().<span class="fn">put</span>(<span class="str">"Email"</span>, email)))
+                    .<span class="fn">put</span>(<span class="str">"Subject"</span>, <span class="str">"Pedido "</span> + order.<span class="fn">getId</span>() + <span class="str">" confirmado"</span>)
+                    .<span class="fn">put</span>(<span class="str">"TextPart"</span>, <span class="str">"Total: R$ "</span> + order.<span class="fn">getTotal</span>())
+            ));
+        client.<span class="fn">post</span>(request);
+    }
+}</code><span class="code-label">adapter / out · Mailjet</span></pre>
+
+    <!-- OUT: Notification SES -->
+    <div class="code-group-label out">
+      ● Opção D — NotificationPort via Amazon SES
+    </div>
+    <pre><code><span class="cm">// adapter/out/notification/SesNotificationAdapter.java</span>
+<span class="cm">// Troca Mailjet por AWS SES — zero alteração no domínio.</span>
+
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">SesNotificationAdapter</span> <span class="kw">implements</span> <span class="ty">NotificationPort</span> {
+
+    <span class="kw">private final</span> <span class="ty">SesClient</span> sesClient;
+
+    <span class="kw">public</span> <span class="fn">SesNotificationAdapter</span>(<span class="ty">SesClient</span> sesClient) {
+        <span class="kw">this</span>.sesClient = sesClient;
+    }
+
+    <span class="dt">@Override</span>
+    <span class="kw">public void</span> <span class="fn">sendOrderConfirmation</span>(<span class="ty">Order</span> order, <span class="ty">String</span> email) {
+        sesClient.<span class="fn">sendEmail</span>(r -> r
+            .<span class="fn">destination</span>(d -> d.<span class="fn">toAddresses</span>(email))
+            .<span class="fn">message</span>(m -> m
+                .<span class="fn">subject</span>(s -> s.<span class="fn">data</span>(<span class="str">"Pedido "</span> + order.<span class="fn">getId</span>() + <span class="str">" confirmado"</span>))
+                .<span class="fn">body</span>(b -> b.<span class="fn">text</span>(t -> t.<span class="fn">data</span>(<span class="str">"Total: R$ "</span> + order.<span class="fn">getTotal</span>())))
+            )
+            .<span class="fn">source</span>(<span class="str">"noreply@loja.com.br"</span>)
+        );
+    }
+}</code><span class="code-label">adapter / out · AWS SES</span></pre>
+
+    <!-- ═══ ADAPTERS DE ENTRADA (IN) ═══ -->
+    <h3>5. Adapters de Entrada (Driving) — o mesmo Use Case, acionado de formas diferentes</h3>
+
+    <p>
+      O <code>CreateOrderUseCase</code> é a interface que o domínio expõe. Qualquer adapter que a receba por injeção pode acionar
+      o mesmo fluxo de negócio — seja via HTTP, fila de mensagens ou linha de comando.
+      <strong>O use case não muda.</strong>
+    </p>
+
+    <!-- IN: REST Controller -->
+    <div class="code-group-label in">
+      ● Opção A — REST Controller (Spring MVC)
+    </div>
     <pre><code><span class="cm">// adapter/in/web/OrderController.java</span>
-<span class="cm">// Conhece Spring MVC. Não conhece regras de negócio.</span>
+<span class="cm">// Aciona o domínio via chamada HTTP POST /orders</span>
 
 <span class="dt">@RestController</span>
 <span class="dt">@RequestMapping</span>(<span class="str">"/orders"</span>)
@@ -1305,7 +1429,107 @@
     <span class="kw">public</span> <span class="ty">ErrorResponse</span> <span class="fn">handleDomainException</span>(<span class="ty">DomainException</span> ex) {
         <span class="kw">return new</span> <span class="ty">ErrorResponse</span>(ex.<span class="fn">getMessage</span>());
     }
-}</code><span class="code-label">adapter / in</span></pre>
+}</code><span class="code-label">adapter / in · HTTP</span></pre>
+
+    <!-- IN: Kafka Consumer -->
+    <div class="code-group-label in">
+      ● Opção B — Kafka Consumer (Spring Kafka)
+    </div>
+    <pre><code><span class="cm">// adapter/in/queue/OrderKafkaConsumer.java</span>
+<span class="cm">// O mesmo use case, agora acionado por uma mensagem no tópico Kafka.</span>
+<span class="cm">// O domínio não sabe de onde vem o comando.</span>
+
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">OrderKafkaConsumer</span> {
+
+    <span class="kw">private final</span> <span class="ty">CreateOrderUseCase</span> createOrderUseCase;
+
+    <span class="kw">public</span> <span class="fn">OrderKafkaConsumer</span>(<span class="ty">CreateOrderUseCase</span> createOrderUseCase) {
+        <span class="kw">this</span>.createOrderUseCase = createOrderUseCase;
+    }
+
+    <span class="dt">@KafkaListener</span>(topics = <span class="str">"orders.create"</span>, groupId = <span class="str">"order-service"</span>)
+    <span class="kw">public void</span> <span class="fn">consume</span>(<span class="ty">CreateOrderMessage</span> message) {
+        <span class="ty">CreateOrderCommand</span> command = <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(
+            message.<span class="fn">customerId</span>(),
+            message.<span class="fn">items</span>()
+        );
+        createOrderUseCase.<span class="fn">execute</span>(command);
+    }
+}</code><span class="code-label">adapter / in · Kafka</span></pre>
+
+    <!-- IN: CLI -->
+    <div class="code-group-label in">
+      ● Opção C — CLI (Spring Shell)
+    </div>
+    <pre><code><span class="cm">// adapter/in/cli/OrderShellAdapter.java</span>
+<span class="cm">// O mesmo use case, agora acionado via terminal.</span>
+<span class="cm">// Útil para scripts internos, migrations, ferramentas de suporte.</span>
+
+<span class="dt">@ShellComponent</span>
+<span class="kw">public class</span> <span class="ty">OrderShellAdapter</span> {
+
+    <span class="kw">private final</span> <span class="ty">CreateOrderUseCase</span> createOrderUseCase;
+
+    <span class="kw">public</span> <span class="fn">OrderShellAdapter</span>(<span class="ty">CreateOrderUseCase</span> createOrderUseCase) {
+        <span class="kw">this</span>.createOrderUseCase = createOrderUseCase;
+    }
+
+    <span class="dt">@ShellMethod</span>(key = <span class="str">"create-order"</span>, value = <span class="str">"Cria um pedido via CLI"</span>)
+    <span class="kw">public</span> <span class="ty">String</span> <span class="fn">createOrder</span>(
+        <span class="dt">@ShellOption</span> <span class="ty">String</span> customerId,
+        <span class="dt">@ShellOption</span> <span class="ty">String</span> productId,
+        <span class="dt">@ShellOption</span> <span class="ty">int</span>    quantity
+    ) {
+        <span class="ty">CreateOrderCommand</span> command = <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(
+            customerId,
+            <span class="ty">List</span>.<span class="fn">of</span>(<span class="kw">new</span> <span class="ty">OrderItem</span>(productId, <span class="ty">BigDecimal</span>.<span class="fn">TEN</span>, quantity))
+        );
+        <span class="ty">CreateOrderOutput</span> output = createOrderUseCase.<span class="fn">execute</span>(command);
+        <span class="kw">return</span> <span class="str">"Pedido criado: "</span> + output.<span class="fn">orderId</span>() + <span class="str">" | Total: R$ "</span> + output.<span class="fn">total</span>();
+    }
+}</code><span class="code-label">adapter / in · CLI</span></pre>
+
+    <!-- IN: Scheduled -->
+    <div class="code-group-label in">
+      ● Opção D — Scheduled Job (Spring @Scheduled)
+    </div>
+    <pre><code><span class="cm">// adapter/in/scheduler/RecurringOrderScheduler.java</span>
+<span class="cm">// O mesmo use case, agora acionado automaticamente a cada hora.</span>
+<span class="cm">// Pedidos recorrentes sem alterar nenhuma regra de negócio.</span>
+
+<span class="dt">@Component</span>
+<span class="kw">public class</span> <span class="ty">RecurringOrderScheduler</span> {
+
+    <span class="kw">private final</span> <span class="ty">CreateOrderUseCase</span>       createOrderUseCase;
+    <span class="kw">private final</span> <span class="ty">RecurringOrderQueryPort</span>   recurringOrders;
+
+    <span class="kw">public</span> <span class="fn">RecurringOrderScheduler</span>(
+        <span class="ty">CreateOrderUseCase</span>     createOrderUseCase,
+        <span class="ty">RecurringOrderQueryPort</span> recurringOrders
+    ) {
+        <span class="kw">this</span>.createOrderUseCase = createOrderUseCase;
+        <span class="kw">this</span>.recurringOrders    = recurringOrders;
+    }
+
+    <span class="dt">@Scheduled</span>(cron = <span class="str">"0 0 * * * *"</span>) <span class="cm">// toda hora</span>
+    <span class="kw">public void</span> <span class="fn">processRecurringOrders</span>() {
+        recurringOrders.<span class="fn">findDue</span>().<span class="fn">forEach</span>(recurring ->
+            createOrderUseCase.<span class="fn">execute</span>(
+                <span class="kw">new</span> <span class="ty">CreateOrderCommand</span>(recurring.<span class="fn">customerId</span>(), recurring.<span class="fn">items</span>())
+            )
+        );
+    }
+}</code><span class="code-label">adapter / in · Scheduler</span></pre>
+
+    <div class="callout callout-accent">
+      <div class="callout-title">💡 O ponto central desta seção</div>
+      <p>
+        Quatro adapters de entrada diferentes (HTTP, Kafka, CLI, Scheduler) e quatro de saída diferentes (JPA, MongoDB, Mailjet, SES) —
+        todos compartilhando <strong>exatamente o mesmo domínio e use case</strong>, sem nenhuma alteração.
+        Isso é o que a Arquitetura Hexagonal garante: <em>o contrato (port) é estável, a implementação (adapter) é intercambiável.</em>
+      </p>
+    </div>
 
     <h3>6. Configuração do Container Spring (DI)</h3>
 
@@ -1458,7 +1682,7 @@
       <div class="layer">
         <span class="layer-dot layer-dot-adapter"></span>
         <span class="layer-name">Driven Adapter</span>
-        <span class="layer-desc">Acionado pelo domínio: PostgreSQL, Redis, SendGrid, S3, Kafka producer.</span>
+        <span class="layer-desc">Acionado pelo domínio: JpaRepository, Redis, Mailjet, S3, Kafka producer.</span>
       </div>
     </div>
 
