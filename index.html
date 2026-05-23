@@ -205,6 +205,7 @@
   .tag-serve { color: var(--port); background: rgba(6,182,212,0.12); border: 1px solid rgba(6,182,212,0.3); }
   .tag-usar  { color: var(--adapter); background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); }
   .tag-exemplo { color: var(--accent-glow); background: var(--accent-soft); border: 1px solid rgba(124,58,237,0.3); }
+  .tag-solid { color: #f472b6; background: rgba(244,114,182,0.12); border: 1px solid rgba(244,114,182,0.3); }
 
   section h2 {
     font-family: var(--font-head);
@@ -599,6 +600,210 @@
     font-weight: 500;
   }
 
+  /* ── SOLID CARDS ── */
+  .solid-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin: 2.5rem 0;
+  }
+
+  .solid-card {
+    background: var(--hex-surface);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color 0.25s;
+  }
+
+  .solid-card:hover { border-color: var(--solid-color, var(--accent)); }
+
+  .solid-card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--hex-border);
+  }
+
+  .solid-letter {
+    font-family: var(--font-head);
+    font-size: 2rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--solid-color, var(--accent));
+    min-width: 2rem;
+  }
+
+  .solid-title-block {}
+
+  .solid-principle {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+
+  .solid-full {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-top: 0.2rem;
+  }
+
+  .solid-badge {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+
+  .badge-core    { color: #10b981; border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.08); }
+  .badge-strong  { color: #06b6d4; border-color: rgba(6,182,212,0.4);  background: rgba(6,182,212,0.08); }
+  .badge-present { color: #f59e0b; border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.08); }
+
+  .solid-card-body {
+    padding: 1.25rem 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+  }
+
+  .solid-col-title {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 0.6rem;
+  }
+
+  .solid-col p {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  .solid-example {
+    background: var(--code-bg);
+    border: 1px solid var(--hex-border);
+    border-radius: 3px;
+    padding: 0.85rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+
+  .solid-example .hl { color: var(--solid-color, var(--accent)); font-weight: 500; }
+
+  /* ── PATTERN CARDS ── */
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    margin: 2rem 0;
+  }
+
+  .pattern-card {
+    background: var(--hex-surface);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    padding: 1.5rem;
+    transition: border-color 0.25s;
+    position: relative;
+  }
+
+  .pattern-card:hover { border-color: var(--accent); }
+
+  .pattern-gof {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border: 1px solid var(--hex-border);
+    padding: 0.15rem 0.45rem;
+    border-radius: 2px;
+  }
+
+  .pattern-name {
+    font-family: var(--font-head);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+    padding-right: 3rem;
+  }
+
+  .pattern-relation {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--accent-glow);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .pattern-card p {
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0;
+  }
+
+  /* ── RELATION MAP ── */
+  .relation-map {
+    background: var(--code-bg);
+    border: 1px solid var(--hex-border);
+    border-radius: 4px;
+    padding: 2rem;
+    margin: 2.5rem 0;
+    overflow-x: auto;
+  }
+
+  .relation-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+  }
+
+  .relation-table th {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    padding: 0.6rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--hex-border);
+  }
+
+  .relation-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    color: var(--text-muted);
+    vertical-align: top;
+  }
+
+  .relation-table tr:last-child td { border-bottom: none; }
+  .relation-table tr:hover td { background: rgba(255,255,255,0.015); }
+
+  .rtd-concept { font-family: var(--font-head); font-weight: 700; color: var(--text); }
+  .rtd-strength { font-family: var(--font-mono); font-size: 0.75rem; }
+  .rtd-core    { color: #10b981; }
+  .rtd-strong  { color: #06b6d4; }
+  .rtd-present { color: #f59e0b; }
+
   /* ── CODE GROUP LABEL ── */
   .code-group-label {
     font-family: var(--font-mono);
@@ -639,6 +844,8 @@
     .flow-arrow { transform: rotate(90deg); }
     .layer { flex-direction: column; gap: 0.75rem; }
     .layer-name { min-width: unset; }
+    .solid-card-body { grid-template-columns: 1fr; }
+    .pattern-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -657,6 +864,7 @@
       <a href="#para-que-serve">Para que serve?</a>
       <a href="#como-utilizar">Como utilizar?</a>
       <a href="#exemplo-real">Exemplo real</a>
+      <a href="#solid-patterns">SOLID &amp; Patterns</a>
       <a href="#resumo">Resumo</a>
     </nav>
   </div>
@@ -1678,6 +1886,342 @@
       <div class="callout-title">✅ O que esse teste prova</div>
       <p>Testamos <strong>100% da lógica de negócio</strong> sem banco de dados, sem Spring Context, sem application.properties. O Mockito substitui os adapters pelas interfaces — exatamente o que a Arquitetura Hexagonal foi projetada para permitir.</p>
     </div>
+  </div>
+</section>
+
+</section>
+
+<!-- ══════════════════════════════════════
+     05 — SOLID & DESIGN PATTERNS
+══════════════════════════════════════ -->
+<section id="solid-patterns">
+  <div class="container">
+    <div class="section-number">05 / 05</div>
+    <span class="section-tag tag-solid">SOLID &amp; Patterns</span>
+    <h2>Relação com SOLID e Design Patterns</h2>
+
+    <p>
+      A Arquitetura Hexagonal não surgiu do nada. Ela é uma <span class="highlight">composição de princípios e padrões</span>
+      que já existiam — organizados em torno da ideia de que o domínio é o centro e tudo externo fala com ele
+      através de contratos que o próprio domínio define. Entender essas conexões aprofunda o <em>porquê</em>
+      das decisões de design, não apenas o <em>como</em>.
+    </p>
+
+    <!-- ═══ SOLID ═══ -->
+    <h3>Os cinco princípios SOLID</h3>
+
+    <div class="solid-grid">
+
+      <!-- S -->
+      <div class="solid-card" style="--solid-color: #10b981">
+        <div class="solid-card-header">
+          <div class="solid-letter">S</div>
+          <div class="solid-title-block">
+            <div class="solid-principle">Single Responsibility Principle</div>
+            <div class="solid-full">Princípio da Responsabilidade Única</div>
+          </div>
+          <span class="solid-badge badge-strong">Forte</span>
+        </div>
+        <div class="solid-card-body">
+          <div class="solid-col">
+            <div class="solid-col-title">Princípio</div>
+            <p>Uma classe deve ter apenas um motivo para mudar. Ela deve ser responsável por uma única parte do comportamento do sistema.</p>
+          </div>
+          <div class="solid-col">
+            <div class="solid-col-title">Na Hexagonal</div>
+            <div class="solid-example">
+              <span class="hl">OrderController</span> → traduz HTTP<br>
+              <span class="hl">CreateOrderService</span> → orquestra negócio<br>
+              <span class="hl">JpaOrderRepository</span> → persiste dados<br>
+              <span class="hl">MailjetAdapter</span> → envia e-mail<br><br>
+              Cada classe tem <span class="hl">um único</span> motivo para mudar.<br>
+              Mudar o banco não toca no controller.<br>
+              Mudar o e-mail não toca no use case.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- O -->
+      <div class="solid-card" style="--solid-color: #06b6d4">
+        <div class="solid-card-header">
+          <div class="solid-letter">O</div>
+          <div class="solid-title-block">
+            <div class="solid-principle">Open/Closed Principle</div>
+            <div class="solid-full">Princípio Aberto/Fechado</div>
+          </div>
+          <span class="solid-badge badge-strong">Forte</span>
+        </div>
+        <div class="solid-card-body">
+          <div class="solid-col">
+            <div class="solid-col-title">Princípio</div>
+            <p>Entidades de software devem estar abertas para extensão, mas fechadas para modificação. Você estende comportamento adicionando código novo, não alterando o existente.</p>
+          </div>
+          <div class="solid-col">
+            <div class="solid-col-title">Na Hexagonal</div>
+            <div class="solid-example">
+              Precisa de um novo canal de entrada?<br>
+              → Crie <span class="hl">OrderKafkaConsumer</span><br>
+              → <span class="hl">Nada mais muda</span><br><br>
+              Precisa de um novo banco de saída?<br>
+              → Crie <span class="hl">MongoOrderRepository</span><br>
+              → <span class="hl">Nada mais muda</span><br><br>
+              O sistema se <span class="hl">estende</span>, nunca se modifica.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- L -->
+      <div class="solid-card" style="--solid-color: #f59e0b">
+        <div class="solid-card-header">
+          <div class="solid-letter">L</div>
+          <div class="solid-title-block">
+            <div class="solid-principle">Liskov Substitution Principle</div>
+            <div class="solid-full">Princípio da Substituição de Liskov</div>
+          </div>
+          <span class="solid-badge badge-strong">Forte</span>
+        </div>
+        <div class="solid-card-body">
+          <div class="solid-col">
+            <div class="solid-col-title">Princípio</div>
+            <p>Objetos de uma subclasse devem poder substituir objetos da superclasse sem quebrar o comportamento do programa. Implementações devem honrar integralmente o contrato da interface.</p>
+          </div>
+          <div class="solid-col">
+            <div class="solid-col-title">Na Hexagonal</div>
+            <div class="solid-example">
+              <span class="hl">CreateOrderService</span> recebe:<br>
+              <span class="hl">OrderRepositoryPort</span><br><br>
+              Pode ser injetado:<br>
+              → <span class="hl">JpaOrderRepository</span> ✓<br>
+              → <span class="hl">MongoOrderRepository</span> ✓<br>
+              → <span class="hl">InMemoryOrderRepository</span> ✓<br><br>
+              Qualquer implementação é<br>
+              substituível — o use case não sente.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- I -->
+      <div class="solid-card" style="--solid-color: #f472b6">
+        <div class="solid-card-header">
+          <div class="solid-letter">I</div>
+          <div class="solid-title-block">
+            <div class="solid-principle">Interface Segregation Principle</div>
+            <div class="solid-full">Princípio da Segregação de Interfaces</div>
+          </div>
+          <span class="solid-badge badge-present">Presente</span>
+        </div>
+        <div class="solid-card-body">
+          <div class="solid-col">
+            <div class="solid-col-title">Princípio</div>
+            <p>Nenhum cliente deve ser forçado a depender de métodos que não usa. É melhor ter muitas interfaces pequenas e específicas do que uma interface grande e genérica.</p>
+          </div>
+          <div class="solid-col">
+            <div class="solid-col-title">Na Hexagonal</div>
+            <div class="solid-example">
+              ✗ <span style="color:#ef4444">Interface única e gorda:</span><br>
+              <span style="color:#5a5a7a">OrderRepository {</span><br>
+              <span style="color:#5a5a7a">  save, findById,</span><br>
+              <span style="color:#5a5a7a">  findAll, delete,</span><br>
+              <span style="color:#5a5a7a">  findByStatus, count... }</span><br><br>
+              ✓ <span class="hl">Ports segregados por intenção:</span><br>
+              <span class="hl">CreateOrderPort</span> → só execute()<br>
+              <span class="hl">OrderQueryPort</span> → só findById()<br>
+              <span class="hl">OrderRepositoryPort</span> → save + find
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- D -->
+      <div class="solid-card" style="--solid-color: #9d5ff0">
+        <div class="solid-card-header">
+          <div class="solid-letter">D</div>
+          <div class="solid-title-block">
+            <div class="solid-principle">Dependency Inversion Principle</div>
+            <div class="solid-full">Princípio da Inversão de Dependência</div>
+          </div>
+          <span class="solid-badge badge-core">Fundação</span>
+        </div>
+        <div class="solid-card-body">
+          <div class="solid-col">
+            <div class="solid-col-title">Princípio</div>
+            <p>Módulos de alto nível não devem depender de módulos de baixo nível. Ambos devem depender de abstrações. As abstrações não devem depender de detalhes — os detalhes é que dependem das abstrações.</p>
+          </div>
+          <div class="solid-col">
+            <div class="solid-col-title">Na Hexagonal</div>
+            <div class="solid-example">
+              <span style="color:#ef4444">// ✗ Sem inversão (acoplado)</span><br>
+              <span style="color:#5a5a7a">CreateOrderService</span><br>
+              <span style="color:#5a5a7a">  → JpaOrderRepository</span><br>
+              <span style="color:#5a5a7a">  → MailjetAdapter</span><br><br>
+              <span class="hl">// ✓ Com inversão (hexagonal)</span><br>
+              <span class="hl">CreateOrderService</span><br>
+              <span class="hl">  → OrderRepositoryPort ←</span><br>
+              <span class="hl">  → NotificationPort   ←</span><br>
+              <span style="color:#5a5a7a">       ↑ implementado por</span><br>
+              <span style="color:#5a5a7a">  JpaOrderRepository</span><br>
+              <span style="color:#5a5a7a">  MailjetAdapter</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /solid-grid -->
+
+    <div class="callout callout-accent">
+      <div class="callout-title">🎯 O mais importante dos cinco</div>
+      <p>
+        O <strong>DIP</strong> é a fundação da Arquitetura Hexagonal — sem ele, não há ports nem a direção de dependência correta.
+        O <strong>ISP</strong> é frequentemente citado, mas aparece como consequência natural de ports bem desenhados.
+        Os outros três (<strong>SRP, OCP, LSP</strong>) emergem automaticamente quando você aplica a arquitetura com disciplina.
+      </p>
+    </div>
+
+    <!-- ═══ DESIGN PATTERNS ═══ -->
+    <h3>Design Patterns relacionados</h3>
+
+    <p>
+      Além do SOLID, a Arquitetura Hexagonal conversa diretamente com três padrões do <em>Gang of Four</em>
+      e com padrões de domínio de Evans (DDD). Conhecê-los ajuda a entender de onde vêm as decisões de design.
+    </p>
+
+    <div class="pattern-grid">
+
+      <div class="pattern-card">
+        <span class="pattern-gof">GoF · Estrutural</span>
+        <div class="pattern-name">Adapter</div>
+        <div class="pattern-relation">→ Relação direta e literal</div>
+        <p>O padrão Adapter converte a interface de uma classe em outra que o cliente espera. Os adapters da arquitetura hexagonal <em>são</em> esse padrão: <code>JpaOrderRepository</code> converte a interface JPA para a interface <code>OrderRepositoryPort</code> que o domínio espera. Cockburn não foi acidental ao nomear a arquitetura de <em>Ports &amp; Adapters</em>.</p>
+      </div>
+
+      <div class="pattern-card">
+        <span class="pattern-gof">GoF · Comportamental</span>
+        <div class="pattern-name">Strategy</div>
+        <div class="pattern-relation">→ Múltiplas implementações de um port</div>
+        <p>O padrão Strategy define uma família de algoritmos intercambiáveis. Quando você tem <code>JpaOrderRepository</code>, <code>MongoOrderRepository</code> e <code>InMemoryOrderRepository</code> todas implementando o mesmo port, você tem Strategy — e o Spring DI faz o papel do contexto que elege qual usar.</p>
+      </div>
+
+      <div class="pattern-card">
+        <span class="pattern-gof">GoF · Estrutural</span>
+        <div class="pattern-name">Facade</div>
+        <div class="pattern-relation">→ Use Case como simplificador</div>
+        <p>O padrão Facade fornece uma interface simplificada para um conjunto complexo de classes. O Use Case age como Facade do domínio: o <code>OrderController</code> não precisa conhecer entidades, value objects ou regras de validação — só chama <code>createOrderUseCase.execute(command)</code> e recebe um resultado.</p>
+      </div>
+
+      <div class="pattern-card">
+        <span class="pattern-gof">DDD · Evans</span>
+        <div class="pattern-name">Repository</div>
+        <div class="pattern-relation">→ Driven adapters de persistência</div>
+        <p>O padrão Repository de Evans media entre o domínio e a camada de dados, simulando uma coleção de objetos em memória. Os driven adapters de persistência implementam exatamente isso: o contrato está no vocabulário do domínio (<code>findByCustomerId</code>), a implementação usa JPA, Mongo ou o que for.</p>
+      </div>
+
+      <div class="pattern-card">
+        <span class="pattern-gof">GoF · Criacional</span>
+        <div class="pattern-name">Factory Method</div>
+        <div class="pattern-relation">→ Criação de entidades de domínio</div>
+        <p>As entidades de domínio usam factory methods estáticos (<code>Order.create(...)</code>) para encapsular criação e validação, mantendo o construtor privado. Isso impede que objetos inválidos existam — e é um padrão GoF clássico dentro do núcleo da arquitetura.</p>
+      </div>
+
+      <div class="pattern-card">
+        <span class="pattern-gof">Enterprise · Fowler</span>
+        <div class="pattern-name">Dependency Injection</div>
+        <div class="pattern-relation">→ Wiring de ports e adapters</div>
+        <p>DI é o mecanismo que permite trocar adapters sem tocar no domínio. O Spring atua como container de DI, resolvendo qual implementação concreta injetar em cada port. Sem DI, você precisaria instanciar tudo manualmente — o que o <code>BeanConfiguration</code> com wiring explícito demonstra.</p>
+      </div>
+
+    </div><!-- /pattern-grid -->
+
+    <h3>Mapa de relações resumido</h3>
+
+    <div class="relation-map">
+      <table class="relation-table">
+        <thead>
+          <tr>
+            <th>Conceito</th>
+            <th>Tipo</th>
+            <th>Força</th>
+            <th>Manifestação na Hexagonal</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="rtd-concept">DIP</td>
+            <td>SOLID</td>
+            <td><span class="rtd-strength rtd-core">● Fundação</span></td>
+            <td>Domínio define ports (abstrações); adapters implementam (detalhes)</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">SRP</td>
+            <td>SOLID</td>
+            <td><span class="rtd-strength rtd-strong">● Forte</span></td>
+            <td>Controller só traduz HTTP; Service só orquestra; Repository só persiste</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">OCP</td>
+            <td>SOLID</td>
+            <td><span class="rtd-strength rtd-strong">● Forte</span></td>
+            <td>Novos adapters adicionam comportamento sem modificar código existente</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">LSP</td>
+            <td>SOLID</td>
+            <td><span class="rtd-strength rtd-strong">● Forte</span></td>
+            <td>JPA, Mongo e InMemory substituem <code>OrderRepositoryPort</code> sem quebrar o use case</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">ISP</td>
+            <td>SOLID</td>
+            <td><span class="rtd-strength rtd-present">● Presente</span></td>
+            <td>Ports pequenos e focados por intenção de uso, não uma interface genérica</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">Adapter</td>
+            <td>GoF · Estrutural</td>
+            <td><span class="rtd-strength rtd-core">● Fundação</span></td>
+            <td>Todo adapter é literalmente o padrão Adapter traduzindo interfaces incompatíveis</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">Strategy</td>
+            <td>GoF · Comportamental</td>
+            <td><span class="rtd-strength rtd-strong">● Forte</span></td>
+            <td>Múltiplas implementações do mesmo port são intercambiáveis em runtime</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">Facade</td>
+            <td>GoF · Estrutural</td>
+            <td><span class="rtd-strength rtd-present">● Presente</span></td>
+            <td>Use Case simplifica a complexidade do domínio para os driving adapters</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">Repository</td>
+            <td>DDD · Evans</td>
+            <td><span class="rtd-strength rtd-strong">● Forte</span></td>
+            <td>Driven adapters de persistência seguem o padrão Repository do DDD</td>
+          </tr>
+          <tr>
+            <td class="rtd-concept">Factory Method</td>
+            <td>GoF · Criacional</td>
+            <td><span class="rtd-strength rtd-present">● Presente</span></td>
+            <td><code>Order.create()</code> encapsula criação e validação no núcleo do domínio</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout callout-port">
+      <div class="callout-title">💡 Por que isso importa na prática</div>
+      <p>
+        Reconhecer esses padrões ao revisar código hexagonal tem impacto direto: quando um colega questionar
+        "por que essa interface?", você responde com DIP. Quando perguntar "por que não reutilizar esse adapter?",
+        você responde com SRP. Quando propuser uma interface com 15 métodos, você responde com ISP.
+        A Arquitetura Hexagonal não é um conjunto de regras arbitrárias — ela é a aplicação coerente
+        de princípios que a engenharia de software já provou funcionarem.
+      </p>
+    </div>
+
   </div>
 </section>
 
